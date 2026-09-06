@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Income Tax Calculator India - Ashutosh</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=zodiak@400,700&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --text-2xl: clamp(2rem, 1.2rem + 2.5vw, 3.5rem);
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem; --space-16: 4rem;
+      --color-bg: #f7f6f2;
+      --color-surface: #f9f8f5;
+      --color-surface-2: #ffffff;
+      --color-surface-offset: #f1ede7;
+      --color-border: #d8d2ca;
+      --color-text: #221f19;
+      --color-text-muted: #6f6a63;
+      --color-text-faint: #9e978f;
+      --color-primary: #01696f;
+      --color-primary-hover: #0c4e54;
+      --color-success: #437a22;
+      --color-warning: #964219;
+      --color-error: #a12c7b;
+      --shadow-sm: 0 1px 2px rgba(34,31,25,.06);
+      --shadow-md: 0 8px 24px rgba(34,31,25,.08);
+      --shadow-lg: 0 20px 48px rgba(34,31,25,.12);
+      --radius-sm: 0.5rem;
+      --radius-md: 0.9rem;
+      --radius-lg: 1.25rem;
+      --radius-xl: 1.75rem;
+      --font-body: 'Satoshi', system-ui, sans-serif;
+      --font-display: 'Zodiak', Georgia, serif;
+    }
+    [data-theme="dark"] {
+      --color-bg: #171614;
+      --color-surface: #1c1b19;
+      --color-surface-2: #23211e;
+      --color-surface-offset: #26231f;
+      --color-border: #393630;
+      --color-text: #ece7de;
+      --color-text-muted: #b2ab9f;
+      --color-text-faint: #857d73;
+      --color-primary: #4f98a3;
+      --color-primary-hover: #72aeb6;
+      --color-success: #7fbb57;
+      --color-warning: #d98d63;
+      --color-error: #d163a7;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.25);
+      --shadow-md: 0 8px 24px rgba(0,0,0,.32);
+      --shadow-lg: 0 20px 48px rgba(0,0,0,.45);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 32%),
+        linear-gradient(180deg, var(--color-bg), var(--color-surface-offset));
+    }
+    button, input, select { font: inherit; }
+    .wrap { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; }
+    .skip-link {
+      position: absolute; left: -999px; top: auto;
+    }
+    .skip-link:focus {
+      left: 1rem; top: 1rem; background: var(--color-primary); color: #fff; padding: .75rem 1rem; border-radius: .75rem; z-index: 1000;
+    }
+    .topbar {
+      padding: var(--space-4) 0;
+      position: sticky; top: 0; z-index: 20;
+      backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--color-bg) 78%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+    }
+    .topbar-inner, .hero-actions, .title-row, .result-actions, .toggle-row {
+      display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+    }
+    .brand {
+      display: flex; align-items: center; gap: .9rem; text-decoration: none; color: inherit;
+    }
+    .logo {
+      width: 42px; height: 42px; padding: .55rem; border-radius: 1rem;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 16%, var(--color-surface-2)), var(--color-surface));
+      box-shadow: var(--shadow-sm);
+      border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
+    }
+    .brand-title { font-weight: 700; letter-spacing: -.02em; }
+    .brand-sub { font-size: var(--text-xs); color: var(--color-text-muted); }
+    .theme-btn, .btn {
+      border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+      background: var(--color-surface-2);
+      color: var(--color-text);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .theme-btn {
+      width: 46px; height: 46px; display: inline-grid; place-items: center;
+    }
+    .theme-btn:hover, .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .hero { padding: clamp(2rem, 5vw, 4rem) 0 1rem; }
+    .hero-card {
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+      border-radius: var(--radius-xl);
+      background: linear-gradient(145deg, color-mix(in srgb, var(--color-surface-2) 88%, var(--color-primary) 12%), var(--color-surface));
+      border: 1px solid color-mix(in srgb, var(--color-primary) 14%, var(--color-text) 8%);
+      box-shadow: var(--shadow-lg);
+    }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: .45rem;
+      padding: .45rem .8rem; border-radius: 999px; font-size: var(--text-xs);
+      background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-2));
+      color: var(--color-primary); font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: var(--text-2xl);
+      line-height: 1;
+      letter-spacing: -.04em;
+      margin: 1rem 0 .8rem;
+      max-width: 12ch;
+    }
+    .hero p { color: var(--color-text-muted); max-width: 66ch; margin: 0 0 1.2rem; }
+    .signature {
+      display: inline-block; margin-top: .5rem; color: var(--color-text-faint); font-size: var(--text-sm);
+    }
+    main { padding-bottom: 2rem; }
+    .grid {
+      display: grid; grid-template-columns: 1.2fr .8fr; gap: var(--space-6); align-items: start;
+    }
+    .panel {
+      background: color-mix(in srgb, var(--color-surface) 92%, var(--color-surface-2));
+      border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+      border-radius: var(--radius-xl);
+      padding: clamp(1.2rem, 2vw, 1.8rem);
+      box-shadow: var(--shadow-md);
+    }
+    .panel h2 {
+      margin: 0 0 .4rem;
+      font-size: var(--text-lg);
+      letter-spacing: -.02em;
+    }
+    .panel-intro { color: var(--color-text-muted); margin: 0 0 1.2rem; font-size: var(--text-sm); }
+    .section-title {
+      margin: 1.2rem 0 .7rem;
+      padding-top: .2rem;
+      font-weight: 700;
+      color: var(--color-text);
+      font-size: var(--text-sm);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .form-grid {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;
+    }
+    .field { display: grid; gap: .45rem; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: var(--text-sm); font-weight: 600; }
+    .hint { font-size: var(--text-xs); color: var(--color-text-faint); }
+    input, select {
+      width: 100%; border-radius: .95rem; border: 1px solid var(--color-border);
+      padding: .9rem 1rem; background: var(--color-surface-2); color: var(--color-text);
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 18%, transparent);
+    }
+    .inline-grid { display: grid; gap: .8rem; }
+    .switches {
+      display: grid; gap: .8rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .switch-card {
+      border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+      background: var(--color-surface-2);
+      border-radius: 1rem; padding: 1rem;
+    }
+    .switch-card input { width: auto; }
+    .radio-line, .check-line { display: flex; align-items: flex-start; gap: .7rem; }
+    .btn {
+      padding: .95rem 1.2rem; font-weight: 700;
+    }
+    .btn-primary {
+      background: var(--color-primary); color: #fff; border-color: transparent;
+    }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-secondary { background: transparent; }
+    .results-stack { display: grid; gap: 1rem; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .kpi {
+      padding: 1rem; border-radius: 1.15rem;
+      background: var(--color-surface-2);
+      border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+    }
+    .kpi .label { font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .08em; }
+    .kpi .value { margin-top: .25rem; font-size: var(--text-xl); font-weight: 700; letter-spacing: -.03em; }
+    .kpi .note { margin-top: .3rem; font-size: var(--text-xs); color: var(--color-text-faint); }
+    .winner {
+      padding: 1rem 1.1rem; border-radius: 1.1rem;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--color-success) 14%, var(--color-surface-2)), var(--color-surface));
+      border: 1px solid color-mix(in srgb, var(--color-success) 25%, transparent);
+    }
+    .winner strong { display: block; margin-bottom: .3rem; }
+    .comparison, .notes {
+      border-radius: 1rem; overflow: hidden; border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: .9rem 1rem; text-align: left; font-size: var(--text-sm); }
+    th { background: var(--color-surface-offset); }
+    tr + tr td { border-top: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
+    .positive { color: var(--color-success); font-weight: 700; }
+    .muted { color: var(--color-text-muted); }
+    .foot-note {
+      margin-top: 1rem; font-size: var(--text-xs); color: var(--color-text-faint); line-height: 1.65;
+    }
+    .notes { background: var(--color-surface-2); }
+    .notes ul { margin: 0; padding: 1rem 1.2rem 1rem 2rem; color: var(--color-text-muted); }
+    .notes li + li { margin-top: .65rem; }
+    .made-by {
+      display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+      margin-top: 1rem; padding-top: 1rem; border-top: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+      font-size: var(--text-sm); color: var(--color-text-muted);
+    }
+    code.signature-code {
+      background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-2));
+      color: var(--color-primary);
+      padding: .25rem .5rem;
+      border-radius: .5rem;
+      font-size: var(--text-xs);
+    }
+    @media (max-width: 920px) {
+      .grid, .form-grid, .switches, .kpi-grid { grid-template-columns: 1fr; }
+      .title-row, .hero-actions, .result-actions, .topbar-inner { align-items: flex-start; flex-direction: column; }
+      .theme-btn { align-self: flex-end; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to calculator</a>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a href="#app" class="brand" aria-label="Income Tax Calculator home">
+        <svg class="logo" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <path d="M15 47h34" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+          <path d="M22 47V21.5L32 15l10 6.5V47" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M26 28h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+          <path d="M32 15v13" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="brand-title">Income Tax Calculator India</div>
+          <div class="brand-sub">Simple, customizable and practical for salaried taxpayers</div>
+        </div>
+      </a>
+      <button class="theme-btn" type="button" data-theme-toggle aria-label="Switch theme">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap hero-card">
+      <span class="eyebrow">India • FY 2026-27 • Old vs New Regime</span>
+      <div class="title-row">
+        <div>
+          <h1>Smart income tax calculator for Indian taxpayers.</h1>
+          <p>This calculator covers salary income, standard deduction, HRA, Section 80C, 80D, home-loan interest, employer NPS under Section 80CCD(2), and compares the old and new tax regimes with cess and rebate logic in a clean single screen.</p>
+          <span class="signature">Design and developed by Ashutosh</span>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" type="button" onclick="document.getElementById('calcBtn').click()">Calculate now</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main id="app" class="wrap">
+    <div class="grid">
+      <section class="panel" aria-labelledby="inputHeading">
+        <h2 id="inputHeading">Input details</h2>
+        <p class="panel-intro">Built with a practical CA-style approach: keep the inputs simple, but cover the major items that usually affect tax liability.</p>
+
+        <div class="section-title">Profile</div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="fy">Financial year</label>
+            <select id="fy">
+              <option selected>FY 2026-27</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="taxpayerType">Taxpayer type</label>
+            <select id="taxpayerType">
+              <option selected>Individual (Below 60)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-title">Income</div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="salaryIncome">Gross salary income</label>
+            <input id="salaryIncome" type="number" min="0" step="1000" value="0" />
+            <span class="hint">Include bonus and taxable allowances.</span>
+          </div>
+          <div class="field">
+            <label for="otherIncome">Other income</label>
+            <input id="otherIncome" type="number" min="0" step="1000" value="0" />
+            <span class="hint">Interest, dividend, freelance, etc.</span>
+          </div>
+          <div class="field full">
+            <label for="houseProperty">Income from house property</label>
+            <input id="houseProperty" type="number" step="1000" value="0" />
+            <span class="hint">Use negative value for self-occupied home-loan loss, typically up to ₹2,00,000 under old regime.</span>
+          </div>
+        </div>
+
+        <div class="section-title">Salary exemptions</div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="hraExemption">HRA exemption</label>
+            <input id="hraExemption" type="number" min="0" step="1000" value="0" />
+          </div>
+          <div class="field">
+            <label for="ltaExemption">LTA / other exempt allowance</label>
+            <input id="ltaExemption" type="number" min="0" step="1000" value="0" />
+          </div>
+        </div>
+
+        <div class="section-title">Deductions mainly for old regime</div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="ded80c">Section 80C</label>
+            <input id="ded80c" type="number" min="0" step="1000" value="0" />
+            <span class="hint">EPF, PPF, ELSS, life insurance; cap ₹1,50,000.</span>
+          </div>
+          <div class="field">
+            <label for="ded80d">Section 80D</label>
+            <input id="ded80d" type="number" min="0" step="1000" value="0" />
+            <span class="hint">Medical insurance premium.</span>
+          </div>
+          <div class="field">
+            <label for="ded80ccd1b">Section 80CCD(1B)</label>
+            <input id="ded80ccd1b" type="number" min="0" step="1000" value="0" />
+            <span class="hint">Additional self NPS deduction; cap ₹50,000.</span>
+          </div>
+          <div class="field">
+            <label for="otherOldDeductions">Other Chapter VI-A deductions</label>
+            <input id="otherOldDeductions" type="number" min="0" step="1000" value="0" />
+            <span class="hint">Example: 80G, education-loan interest, etc.</span>
+          </div>
+        </div>
+
+        <div class="section-title">New regime special benefit</div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="basicDa">Basic + DA</label>
+            <input id="basicDa" type="number" min="0" step="1000" value="0" />
+            <span class="hint">Used to validate employer NPS cap.</span>
+          </div>
+          <div class="field">
+            <label for="employerNps">Employer NPS contribution</label>
+            <input id="employerNps" type="number" min="0" step="1000" value="0" />
+            <span class="hint">Allowed under Section 80CCD(2), capped at 14% of Basic + DA here.</span>
+          </div>
+        </div>
+
+        <div class="section-title">Calculation controls</div>
+        <div class="switches">
+          <div class="switch-card">
+            <div class="radio-line">
+              <input type="radio" name="residentStatus" id="residentYes" checked>
+              <div>
+                <label for="residentYes">Resident individual</label>
+                <div class="hint">Needed for rebate under Section 87A.</div>
+              </div>
+            </div>
+          </div>
+          <div class="switch-card">
+            <div class="check-line">
+              <input type="checkbox" id="applyMarginalRelief" checked>
+              <div>
+                <label for="applyMarginalRelief">Apply rebate-style marginal relief check</label>
+                <div class="hint">Useful near rebate thresholds.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-actions" style="margin-top:1.2rem;">
+          <button class="btn btn-primary" id="calcBtn" type="button">Calculate tax</button>
+          <button class="btn btn-secondary" id="resetBtn" type="button">Reset defaults</button>
+        </div>
+      </section>
+
+      <aside class="panel" aria-labelledby="resultHeading">
+        <h2 id="resultHeading">Tax result</h2>
+        <p class="panel-intro">Use this side as your decision screen. It compares both regimes and highlights the better option.</p>
+
+        <div class="results-stack">
+          <div class="winner" id="winnerBox"></div>
+
+          <div class="kpi-grid">
+            <div class="kpi">
+              <div class="label">Old regime tax</div>
+              <div class="value" id="oldTaxValue">₹0</div>
+              <div class="note" id="oldTaxableNote">Taxable income: ₹0</div>
+            </div>
+            <div class="kpi">
+              <div class="label">New regime tax</div>
+              <div class="value" id="newTaxValue">₹0</div>
+              <div class="note" id="newTaxableNote">Taxable income: ₹0</div>
+            </div>
+          </div>
+
+          <div class="comparison">
+            <table>
+              <thead>
+                <tr>
+                  <th>Particular</th>
+                  <th>Old regime</th>
+                  <th>New regime</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Gross total income</td>
+                  <td id="rowGrossOld">₹0</td>
+                  <td id="rowGrossNew">₹0</td>
+                </tr>
+                <tr>
+                  <td>Salary exemption impact</td>
+                  <td id="rowExOld">₹0</td>
+                  <td id="rowExNew">₹0</td>
+                </tr>
+                <tr>
+                  <td>Standard deduction</td>
+                  <td id="rowStdOld">₹50,000</td>
+                  <td id="rowStdNew">₹75,000</td>
+                </tr>
+                <tr>
+                  <td>Other deductions allowed</td>
+                  <td id="rowDedOld">₹0</td>
+                  <td id="rowDedNew">₹0</td>
+                </tr>
+                <tr>
+                  <td>Taxable income</td>
+                  <td id="rowTaxableOld">₹0</td>
+                  <td id="rowTaxableNew">₹0</td>
+                </tr>
+                <tr>
+                  <td>Total tax incl. cess</td>
+                  <td id="rowTaxOld">₹0</td>
+                  <td id="rowTaxNew">₹0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="notes">
+            <ul id="notesList"></ul>
+          </div>
+
+          <div class="foot-note">
+            This tool is designed for quick planning, not as a substitute for return filing review. Special rates for capital gains, surcharge-heavy cases, alternative minimum tax issues, and complex perquisite treatment are intentionally not modeled here.
+          </div>
+
+          <div class="made-by">
+            <span>Design and developed by Ashutosh</span>
+            <code class="signature-code">// Signed by Ashutosh M.</code>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    // Signed by Ashutosh M.
+    const byId = (id) => document.getElementById(id);
+    const defaults = {
+      salaryIncome: 0,
+      otherIncome: 0,
+      houseProperty: 0,
+      hraExemption: 0,
+      ltaExemption: 0,
+      ded80c: 0,
+      ded80d: 0,
+      ded80ccd1b: 0,
+      otherOldDeductions: 0,
+      basicDa: 0,
+      employerNps: 0,
+      residentYes: true,
+      applyMarginalRelief: true
+    };
+
+    function formatINR(num) {
+      return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(Math.round(num));
+    }
+
+    function money(num) {
+      return `₹${formatINR(num)}`;
+    }
+
+    function val(id) {
+      return Number(byId(id).value || 0);
+    }
+
+    function clamp(n, min, max) {
+      return Math.min(Math.max(n, min), max);
+    }
+
+    function oldRegimeSlabTax(income) {
+      let tax = 0;
+      if (income <= 250000) return 0;
+      if (income > 250000) tax += Math.min(income, 500000) - 250000 > 0 ? (Math.min(income, 500000) - 250000) * 0.05 : 0;
+      if (income > 500000) tax += (Math.min(income, 1000000) - 500000) * 0.20;
+      if (income > 1000000) tax += (income - 1000000) * 0.30;
+      return tax;
+    }
+
+    function newRegimeSlabTax(income) {
+      const slabs = [
+        [400000, 0],
+        [800000, 0.05],
+        [1200000, 0.10],
+        [1600000, 0.15],
+        [2000000, 0.20],
+        [2400000, 0.25],
+        [Infinity, 0.30]
+      ];
+      let prev = 0;
+      let tax = 0;
+      for (const [limit, rate] of slabs) {
+        if (income > prev) {
+          tax += (Math.min(income, limit) - prev) * rate;
+          prev = limit;
+        }
+      }
+      return tax;
+    }
+
+    function applyNewRebate(baseTax, taxableIncome, isResident, enableMarginalRelief) {
+      if (!isResident) return baseTax;
+      const threshold = 1200000;
+      const maxRebate = 60000;
+      if (taxableIncome <= threshold) return Math.max(baseTax - Math.min(baseTax, maxRebate), 0);
+      if (!enableMarginalRelief) return baseTax;
+      const excess = taxableIncome - threshold;
+      return Math.min(baseTax, excess);
+    }
+
+    function applyOldRebate(baseTax, taxableIncome, isResident) {
+      if (!isResident) return baseTax;
+      if (taxableIncome <= 500000) return Math.max(baseTax - Math.min(baseTax, 12500), 0);
+      return baseTax;
+    }
+
+    function compute() {
+      const salaryIncome = val('salaryIncome');
+      const otherIncome = val('otherIncome');
+      const houseProperty = val('houseProperty');
+      const hraExemption = val('hraExemption');
+      const ltaExemption = val('ltaExemption');
+      const ded80c = clamp(val('ded80c'), 0, 150000);
+      const ded80d = Math.max(val('ded80d'), 0);
+      const ded80ccd1b = clamp(val('ded80ccd1b'), 0, 50000);
+      const otherOldDeductions = Math.max(val('otherOldDeductions'), 0);
+      const basicDa = Math.max(val('basicDa'), 0);
+      const employerNpsInput = Math.max(val('employerNps'), 0);
+      const isResident = byId('residentYes').checked;
+      const enableMarginalRelief = byId('applyMarginalRelief').checked;
+
+      const grossIncome = salaryIncome + otherIncome + houseProperty;
+      const totalExemptions = Math.max(hraExemption, 0) + Math.max(ltaExemption, 0);
+      const incomeAfterExemption = Math.max(grossIncome - totalExemptions, 0);
+
+      const stdOld = 50000;
+      const stdNew = 75000;
+      const employerNpsAllowed = Math.min(employerNpsInput, basicDa * 0.14);
+
+      const oldDeductions = ded80c + ded80d + ded80ccd1b + otherOldDeductions;
+      const taxableOld = Math.max(incomeAfterExemption - stdOld - oldDeductions, 0);
+      let oldTaxBase = oldRegimeSlabTax(taxableOld);
+      oldTaxBase = applyOldRebate(oldTaxBase, taxableOld, isResident);
+      const oldTax = oldTaxBase * 1.04;
+
+      const taxableNew = Math.max(incomeAfterExemption - stdNew - employerNpsAllowed, 0);
+      let newTaxBase = newRegimeSlabTax(taxableNew);
+      newTaxBase = applyNewRebate(newTaxBase, taxableNew, isResident, enableMarginalRelief);
+      const newTax = newTaxBase * 1.04;
+
+      const better = oldTax < newTax ? 'Old Regime' : 'New Regime';
+      const savings = Math.abs(oldTax - newTax);
+
+      byId('oldTaxValue').textContent = money(oldTax);
+      byId('newTaxValue').textContent = money(newTax);
+      byId('oldTaxableNote').textContent = `Taxable income: ${money(taxableOld)}`;
+      byId('newTaxableNote').textContent = `Taxable income: ${money(taxableNew)}`;
+
+      byId('rowGrossOld').textContent = money(grossIncome);
+      byId('rowGrossNew').textContent = money(grossIncome);
+      byId('rowExOld').textContent = `-${money(totalExemptions)}`;
+      byId('rowExNew').textContent = `-${money(totalExemptions)}`;
+      byId('rowStdOld').textContent = `-${money(stdOld)}`;
+      byId('rowStdNew').textContent = `-${money(stdNew)}`;
+      byId('rowDedOld').textContent = `-${money(oldDeductions)}`;
+      byId('rowDedNew').textContent = `-${money(employerNpsAllowed)}`;
+      byId('rowTaxableOld').textContent = money(taxableOld);
+      byId('rowTaxableNew').textContent = money(taxableNew);
+      byId('rowTaxOld').textContent = money(oldTax);
+      byId('rowTaxNew').textContent = money(newTax);
+
+      byId('winnerBox').innerHTML = `<strong>${better} is currently better for you.</strong><span class="muted">Estimated tax saved: <span class="positive">${money(savings)}</span></span>`;
+
+      const notes = [
+        `Standard deduction considered: ${money(stdOld)} in old regime and ${money(stdNew)} in new regime.`,
+        `Employer NPS allowed in new regime is restricted here to 14% of Basic + DA, so eligible amount used is ${money(employerNpsAllowed)}.`,
+        `Section 80C is capped at ${money(150000)} and Section 80CCD(1B) is capped at ${money(50000)} in this calculator.`,
+        `Health and education cess at 4% is included in both results.`,
+        isResident ? `Resident rebate logic is applied. Under new regime, rebate threshold check is considered around taxable income of ${money(1200000)}.` : `Rebate is not applied because resident status is not selected.`
+      ];
+      byId('notesList').innerHTML = notes.map(item => `<li>${item}</li>`).join('');
+    }
+
+    function resetDefaults() {
+      Object.entries(defaults).forEach(([key, value]) => {
+        const el = byId(key);
+        if (!el) return;
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          el.checked = value;
+        } else {
+          el.value = value;
+        }
+      });
+      compute();
+    }
+
+    (function initTheme() {
+      const root = document.documentElement;
+      const btn = document.querySelector('[data-theme-toggle]');
+      let theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.setAttribute('data-theme', theme);
+      btn.addEventListener('click', () => {
+        theme = theme === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', theme);
+        btn.innerHTML = theme === 'dark'
+          ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+          : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+      });
+    })();
+
+    byId('calcBtn').addEventListener('click', compute);
+    byId('resetBtn').addEventListener('click', resetDefaults);
+    document.querySelectorAll('input, select').forEach(el => el.addEventListener('change', compute));
+    compute();
+  </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>interactive-sales-dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root, [data-theme="light"] {
+      --bg:#f7f6f2;--surface:#fbfbf9;--surface2:#f1eee9;--text:#222;--muted:#6b7280;--primary:#01696f;--border:rgba(34,34,34,.08);--success:#437a22;--warn:#da7101;--error:#a13544;
+      --shadow:0 12px 30px rgba(20,20,20,.08);--radius:20px;
+    }
+    [data-theme="dark"] {--bg:#151515;--surface:#1c1c1c;--surface2:#252525;--text:#ececec;--muted:#a3a3a3;--primary:#4f98a3;--border:rgba(255,255,255,.08);--success:#7cc65a;--warn:#ffb85c;--error:#ff8aa0;--shadow:0 18px 40px rgba(0,0,0,.35);}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+    .sidebar{padding:24px;border-right:1px solid var(--border);background:var(--surface);position:sticky;top:0;height:100vh;overflow:auto}
+    .brand{display:flex;gap:12px;align-items:center;margin-bottom:24px} .logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--primary),#8bc7c7)}
+    .title{font-size:1.15rem;font-weight:800} .sub{color:var(--muted);font-size:.92rem}
+    .control{margin:18px 0} .control label{display:block;font-size:.88rem;margin-bottom:8px;color:var(--muted)}
+    .control select,.control input{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--bg);color:var(--text)}
+    .main{padding:24px} .top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+    .btn{border:1px solid var(--border);background:var(--surface);padding:10px 14px;border-radius:999px;color:var(--text);cursor:pointer}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+    .kpi .label{color:var(--muted);font-size:.85rem} .kpi .value{font-size:1.8rem;font-weight:800;margin-top:10px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px} .span-6{grid-column:span 6} .span-4{grid-column:span 4} .span-8{grid-column:span 8} .span-12{grid-column:span 12}
+    .chart{min-height:360px} .note{font-size:.85rem;color:var(--muted)}
+    .footer-note{margin-top:16px;color:var(--muted);font-size:.9rem}
+    .err{padding:12px 14px;border-radius:12px;background:rgba(161,53,68,.08);color:var(--error);display:none;margin-top:10px}
+    @media (max-width: 1080px){.wrap{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--border)}.kpis{grid-template-columns:repeat(2,1fr)}.span-6,.span-4,.span-8{grid-column:span 12}}
+    @media (max-width: 640px){.main{padding:14px}.sidebar{padding:16px}.kpis{grid-template-columns:1fr}.chart{min-height:300px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div><div class="title">Business Dashboard</div><div class="sub">Interactive publish-ready HTML</div></div>
+    </div>
+    <button class="btn" data-theme-toggle aria-label="Toggle theme">Toggle theme</button>
+    <div class="control"><label for="metricSelect">Primary metric</label><select id="metricSelect"><option value="revenue">Revenue</option><option value="units">Units</option><option value="rating">Rating</option></select></div>
+    <div class="control"><label for="monthRange">Top products shown</label><input id="monthRange" type="range" min="3" max="10" value="6" /></div>
+    <div class="control"><label for="regionFilter">Region filter</label><select id="regionFilter"><option value="All">All regions</option></select></div>
+    <div class="control"><label for="searchBox">Product search</label><input id="searchBox" type="text" placeholder="Type product name" /></div>
+    <div id="errorBox" class="err"></div>
+    <p class="footer-note">This dashboard includes defensive parsing, responsive layout, interactive charts, filter controls, and safe fallbacks for missing columns.</p>
+  </aside>
+  <main class="main">
+    <div class="top">
+      <div>
+        <h1 style="margin:0;font-size:2rem">Sales, inventory, and feedback overview</h1>
+        <div class="sub">Built from the uploaded CSV files with robust exception handling.</div>
+      </div>
+    </div>
+    <section class="kpis">
+      <div class="card kpi"><div class="label">Total revenue</div><div id="kpiRevenue" class="value">-</div></div>
+      <div class="card kpi"><div class="label">Units sold</div><div id="kpiUnits" class="value">-</div></div>
+      <div class="card kpi"><div class="label">Average rating</div><div id="kpiRating" class="value">-</div></div>
+      <div class="card kpi"><div class="label">Inventory units</div><div id="kpiInventory" class="value">-</div></div>
+    </section>
+    <section class="grid">
+      <div class="card span-8"><h3>Monthly trend</h3><div id="monthlyChart" class="chart"></div></div>
+      <div class="card span-4"><h3>Regional contribution</h3><div id="regionChart" class="chart"></div></div>
+      <div class="card span-6"><h3>Top products</h3><div id="productChart" class="chart"></div></div>
+      <div class="card span-6"><h3>Inventory status</h3><div id="inventoryChart" class="chart"></div></div>
+      <div class="card span-6"><h3>Product ratings</h3><div id="ratingChart" class="chart"></div></div>
+      <div class="card span-6"><h3>Sentiment mix</h3><div id="sentimentChart" class="chart"></div></div>
+      <div class="card span-12"><h3>Dataset structure</h3><div id="metaPanel" class="note"></div></div>
+    </section>
+  </main>
+</div>
+<script>
+const rawData = {"sales_columns": ["TransactionID", "ProductID", "CustomerID", "Quantity", "SalesAmount", "TransactionDate"], "inventory_columns": ["ProductID", "ProductName", "Category", "StockLevel", "RestockingFrequency", "LastRestocked"], "feedback_columns": ["FeedbackID", "ProductID", "CustomerID", "FeedbackScore", "FeedbackDate"], "mapped": {"sales_date": "TransactionDate", "sales_product": "ProductID", "sales_region": null, "sales_units": "Quantity", "sales_revenue": "SalesAmount", "inv_product": "ProductID", "inv_stock": "StockLevel", "inv_category": "Category", "inv_price": null, "fb_product": "ProductID", "fb_rating": "FeedbackScore", "fb_region": null, "fb_date": "FeedbackDate", "fb_sentiment": null}, "kpis": {"total_revenue": 33450.0, "total_units": 129.0, "avg_rating": 4.052, "inventory_units": 3147.0}, "monthly_sales": [{"month": "2023-01", "SalesAmount": 2100}, {"month": "2023-02", "SalesAmount": 600}, {"month": "2023-03", "SalesAmount": 600}, {"month": "2023-04", "SalesAmount": 900}, {"month": "2023-05", "SalesAmount": 2350}, {"month": "2023-06", "SalesAmount": 2000}, {"month": "2023-07", "SalesAmount": 550}, {"month": "2023-08", "SalesAmount": 1000}, {"month": "2023-09", "SalesAmount": 850}, {"month": "2023-10", "SalesAmount": 2400}, {"month": "2023-11", "SalesAmount": 600}, {"month": "2023-12", "SalesAmount": 1600}], "product_sales": [{"ProductID": 5, "SalesAmount": 1600}, {"ProductID": 25, "SalesAmount": 1600}, {"ProductID": 48, "SalesAmount": 1600}, {"ProductID": 10, "SalesAmount": 1500}, {"ProductID": 31, "SalesAmount": 1500}, {"ProductID": 51, "SalesAmount": 1500}, {"ProductID": 15, "SalesAmount": 1200}, {"ProductID": 36, "SalesAmount": 1200}, {"ProductID": 42, "SalesAmount": 1000}, {"ProductID": 21, "SalesAmount": 1000}], "region_sales": [], "inventory_status": [{"StockStatus": "High", "size": 16}, {"StockStatus": "Low", "size": 19}, {"StockStatus": "Medium", "size": 17}], "ratings_by_product": [{"ProductID": 1, "FeedbackScore": 4.5}, {"ProductID": 10, "FeedbackScore": 4.5}, {"ProductID": 19, "FeedbackScore": 4.5}, {"ProductID": 14, "FeedbackScore": 4.4}, {"ProductID": 31, "FeedbackScore": 4.4}, {"ProductID": 25, "FeedbackScore": 4.4}, {"ProductID": 41, "FeedbackScore": 4.4}, {"ProductID": 51, "FeedbackScore": 4.4}, {"ProductID": 17, "FeedbackScore": 4.3}, {"ProductID": 37, "FeedbackScore": 4.3}], "sentiment_dist": [], "quality": {"sales_rows": 52, "inventory_rows": 52, "feedback_rows": 52, "sales_missing_cells": 28, "inventory_missing_cells": 0, "feedback_missing_cells": 7}};
+(function(){
+  const root = document.documentElement;
+  const themeBtn = document.querySelector('[data-theme-toggle]');
+  let theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  root.setAttribute('data-theme', theme);
+  themeBtn.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', theme); renderAll(); });
+
+  const el = id => document.getElementById(id);
+  const fmtNum = v => (v==null || Number.isNaN(v)) ? 'N/A' : new Intl.NumberFormat().format(Math.round(v));
+  const fmtMoney = v => (v==null || Number.isNaN(v)) ? 'N/A' : new Intl.NumberFormat('en-US', {style:'currency', currency:'USD', maximumFractionDigits:0}).format(v);
+  const fmtDec = v => (v==null || Number.isNaN(v)) ? 'N/A' : Number(v).toFixed(2);
+  const safe = (arr) => Array.isArray(arr) ? arr : [];
+  const errBox = el('errorBox');
+
+  function showError(msg) { errBox.style.display = msg ? 'block' : 'none'; errBox.textContent = msg || ''; }
+
+  function getThemeColors() {
+    const s = getComputedStyle(document.documentElement);
+    return {bg:s.getPropertyValue('--bg').trim(), surface:s.getPropertyValue('--surface').trim(), text:s.getPropertyValue('--text').trim(), muted:s.getPropertyValue('--muted').trim(), primary:s.getPropertyValue('--primary').trim(), border:s.getPropertyValue('--border').trim(), success:s.getPropertyValue('--success').trim(), warn:s.getPropertyValue('--warn').trim(), error:s.getPropertyValue('--error').trim()};
+  }
+
+  function populateFilters() {
+    const regionSel = el('regionFilter');
+    const regions = ['All', ...new Set(safe(rawData.region_sales).map(d => Object.values(d)[0]))];
+    regionSel.innerHTML = regions.map(r => `<option value="${String(r).replace(/"/g,'&quot;')}">${r}${r==='All'?' regions':''}</option>`).join('');
+  }
+
+  function filteredData() {
+    const topN = Math.max(3, Math.min(10, Number(el('monthRange').value || 6)));
+    const q = (el('searchBox').value || '').toLowerCase();
+    let products = safe(rawData.product_sales).map(d => ({name: d[rawData.mapped.sales_product], value: d[rawData.mapped.sales_revenue]}));
+    if (q) products = products.filter(d => String(d.name).toLowerCase().includes(q));
+    products = products.slice(0, topN);
+    return {topN, q, products};
+  }
+
+  function renderKPIs() {
+    el('kpiRevenue').textContent = fmtMoney(rawData.kpis.total_revenue);
+    el('kpiUnits').textContent = fmtNum(rawData.kpis.total_units);
+    el('kpiRating').textContent = fmtDec(rawData.kpis.avg_rating);
+    el('kpiInventory').textContent = fmtNum(rawData.kpis.inventory_units);
+  }
+
+  function renderAll() {
+    try {
+      showError('');
+      renderKPIs();
+      const c = getThemeColors();
+      const filt = filteredData();
+      const plotLayout = {paper_bgcolor:c.surface, plot_bgcolor:c.surface, font:{color:c.text,family:'Inter, sans-serif'}, margin:{l:50,r:20,t:20,b:50}};
+
+      const m = safe(rawData.monthly_sales);
+      Plotly.newPlot('monthlyChart', [{x:m.map(d=>d.month), y:m.map(d=>d[rawData.mapped.sales_revenue]), type:'scatter', mode:'lines+markers', line:{color:c.primary,width:3}, marker:{size:8}}], {...plotLayout, xaxis:{title:'Month', gridcolor:c.border}, yaxis:{title:'Revenue', gridcolor:c.border}}, {responsive:true, displayModeBar:false});
+
+      const rs = safe(rawData.region_sales);
+      Plotly.newPlot('regionChart', [{labels:rs.map(d=>d[rawData.mapped.sales_region]), values:rs.map(d=>d[rawData.mapped.sales_revenue]), type:'pie', hole:.55, marker:{colors:[c.primary,c.success,c.warn,c.error,'#7a39bb','#006494']}}], {...plotLayout, margin:{l:10,r:10,t:20,b:10}, showlegend:true}, {responsive:true, displayModeBar:false});
+
+      Plotly.newPlot('productChart', [{x:filt.products.map(d=>d.value).reverse(), y:filt.products.map(d=>d.name).reverse(), type:'bar', orientation:'h', marker:{color:c.primary}}], {...plotLayout, xaxis:{title:'Revenue', gridcolor:c.border}, yaxis:{automargin:true}}, {responsive:true, displayModeBar:false});
+
+      const inv = safe(rawData.inventory_status);
+      Plotly.newPlot('inventoryChart', [{x:inv.map(d=>d.StockStatus), y:inv.map(d=>d.size), type:'bar', marker:{color:[c.error,c.warn,c.success]}}], {...plotLayout, xaxis:{title:'Status'}, yaxis:{title:'Products'}}, {responsive:true, displayModeBar:false});
+
+      const rt = safe(rawData.ratings_by_product).slice(0, Math.max(5, filt.topN));
+      Plotly.newPlot('ratingChart', [{x:rt.map(d=>d[rawData.mapped.fb_product]), y:rt.map(d=>d[rawData.mapped.fb_rating]), type:'bar', marker:{color:c.success}}], {...plotLayout, xaxis:{tickangle:-25}, yaxis:{title:'Average rating', range:[0,5]}}, {responsive:true, displayModeBar:false});
+
+      const sd = safe(rawData.sentiment_dist);
+      Plotly.newPlot('sentimentChart', [{labels:sd.map(d=>d[rawData.mapped.fb_sentiment]), values:sd.map(d=>d.size), type:'pie', marker:{colors:[c.success,c.warn,c.error,c.primary]}}], {...plotLayout, margin:{l:10,r:10,t:20,b:10}}, {responsive:true, displayModeBar:false});
+
+      el('metaPanel').innerHTML = `Sales columns: ${rawData.sales_columns.join(', ') || 'N/A'}<br>Inventory columns: ${rawData.inventory_columns.join(', ') || 'N/A'}<br>Feedback columns: ${rawData.feedback_columns.join(', ') || 'N/A'}<br>Rows: Sales ${rawData.quality.sales_rows}, Inventory ${rawData.quality.inventory_rows}, Feedback ${rawData.quality.feedback_rows}<br>Missing cells: Sales ${rawData.quality.sales_missing_cells}, Inventory ${rawData.quality.inventory_missing_cells}, Feedback ${rawData.quality.feedback_missing_cells}`;
+    } catch (e) {
+      console.error(e);
+      showError('Some visual elements could not be rendered. The dashboard remains usable, and the parsed data summary is still available.');
+    }
+  }
+
+  ['metricSelect','monthRange','regionFilter','searchBox'].forEach(id => el(id).addEventListener('input', renderAll));
+  window.addEventListener('resize', renderAll);
+  populateFilters();
+  renderAll();
+})();
+</script>
+</body>
+</html>

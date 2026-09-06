@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HealthyDay</title>
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2rem);
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+      --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
+      --space-12: 3rem; --space-16: 4rem;
+      --color-bg: #f7f6f2;
+      --color-surface: #fbfbf9;
+      --color-surface-2: #f3f0ec;
+      --color-border: #d4d1ca;
+      --color-divider: #e4e0d8;
+      --color-text: #28251d;
+      --color-text-muted: #6b6964;
+      --color-text-faint: #9a9893;
+      --color-primary: #01696f;
+      --color-primary-hover: #0c4e54;
+      --color-primary-highlight: #cedcd8;
+      --color-success: #437a22;
+      --color-warning: #964219;
+      --color-error: #a12c7b;
+      --shadow-sm: 0 1px 2px rgba(25, 20, 13, 0.06);
+      --shadow-md: 0 6px 16px rgba(25, 20, 13, 0.08);
+      --radius-sm: 0.5rem; --radius-md: 0.75rem; --radius-lg: 1rem; --radius-full: 999px;
+      --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      --font-body: 'Satoshi', system-ui, sans-serif;
+      --font-display: 'Satoshi', system-ui, sans-serif;
+    }
+    [data-theme="dark"] {
+      --color-bg: #171614;
+      --color-surface: #1c1b19;
+      --color-surface-2: #22211f;
+      --color-border: #393836;
+      --color-divider: #2b2a28;
+      --color-text: #e1dfdb;
+      --color-text-muted: #a4a19c;
+      --color-text-faint: #7f7c77;
+      --color-primary: #4f98a3;
+      --color-primary-hover: #69aeb8;
+      --color-primary-highlight: #223033;
+      --color-success: #7cb35d;
+      --color-warning: #d38b63;
+      --color-error: #d87db6;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+      --shadow-md: 0 8px 20px rgba(0,0,0,0.28);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) {
+        --color-bg: #171614;
+        --color-surface: #1c1b19;
+        --color-surface-2: #22211f;
+        --color-border: #393836;
+        --color-divider: #2b2a28;
+        --color-text: #e1dfdb;
+        --color-text-muted: #a4a19c;
+        --color-text-faint: #7f7c77;
+        --color-primary: #4f98a3;
+        --color-primary-hover: #69aeb8;
+        --color-primary-highlight: #223033;
+        --color-success: #7cb35d;
+        --color-warning: #d38b63;
+        --color-error: #d87db6;
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: none; text-size-adjust: none; scroll-behavior: smooth; }
+    body {
+      margin: 0; min-height: 100dvh; font-family: var(--font-body); background: var(--color-bg);
+      color: var(--color-text); line-height: 1.5; font-size: var(--text-base);
+    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    input, select {
+      width: 100%; min-height: 44px; border: 1px solid var(--color-border); background: var(--color-surface);
+      border-radius: var(--radius-md); padding: 0.85rem 0.95rem;
+    }
+    input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
+      outline: 2px solid var(--color-primary); outline-offset: 2px;
+    }
+    .app {
+      max-width: 980px; margin: 0 auto; padding: var(--space-4); padding-bottom: 5.5rem;
+    }
+    .topbar {
+      position: sticky; top: 0; z-index: 20; backdrop-filter: blur(16px);
+      background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+      border-bottom: 1px solid var(--color-divider); margin: -1rem -1rem var(--space-4);
+      padding: var(--space-3) var(--space-4);
+    }
+    .topbar-inner {
+      max-width: 980px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+    }
+    .brand { display: flex; align-items: center; gap: 0.85rem; }
+    .logo {
+      width: 42px; height: 42px; border-radius: 14px; background: linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 45%, white));
+      display: grid; place-items: center; color: white; box-shadow: var(--shadow-md); flex: 0 0 auto;
+    }
+    .brand h1 { font-size: var(--text-lg); margin: 0; line-height: 1.1; }
+    .brand p { margin: 0.15rem 0 0; color: var(--color-text-muted); font-size: var(--text-xs); }
+    .icon-btn, .btn {
+      min-height: 44px; border-radius: var(--radius-full); transition: transform var(--transition), background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+    .icon-btn {
+      min-width: 44px; display: inline-grid; place-items: center; border: 1px solid var(--color-border); background: var(--color-surface);
+    }
+    .btn {
+      padding: 0.8rem 1rem; border: 1px solid transparent; font-size: var(--text-sm); font-weight: 700;
+    }
+    .btn:active, .icon-btn:active, .tab-btn:active, .fab:active { transform: scale(0.98); }
+    .btn-primary { background: var(--color-primary); color: #fff; box-shadow: var(--shadow-sm); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-secondary { background: var(--color-surface); border-color: var(--color-border); }
+    .btn-danger { background: color-mix(in srgb, var(--color-error) 12%, var(--color-surface)); color: var(--color-error); border-color: color-mix(in srgb, var(--color-error) 26%, var(--color-border)); }
+    .meta { color: var(--color-text-muted); font-size: var(--text-sm); }
+    .hero {
+      display: grid; gap: var(--space-4); grid-template-columns: 1fr; margin-bottom: var(--space-4);
+    }
+    .card {
+      background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+      padding: var(--space-4); box-shadow: var(--shadow-sm);
+    }
+    .card h2, .card h3 { margin: 0 0 0.4rem; line-height: 1.15; }
+    .section-title { font-size: var(--text-lg); }
+    .summary-grid, .stats-grid {
+      display: grid; gap: var(--space-3); grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .summary-tile {
+      padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface-2); border: 1px solid var(--color-border);
+    }
+    .summary-tile .label { font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .summary-tile .value { font-size: var(--text-xl); font-weight: 700; margin-top: 0.2rem; }
+    .summary-tile .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 0.2rem; }
+    .accent { background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)); }
+    .success { background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface)); }
+    .warning { background: color-mix(in srgb, var(--color-warning) 12%, var(--color-surface)); }
+    .tabs {
+      position: fixed; left: 50%; bottom: 0.7rem; transform: translateX(-50%); width: min(96vw, 640px);
+      background: color-mix(in srgb, var(--color-surface) 92%, transparent); backdrop-filter: blur(18px);
+      border: 1px solid var(--color-border); border-radius: 1.25rem; padding: 0.4rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; box-shadow: var(--shadow-md); z-index: 25;
+    }
+    .tab-btn {
+      min-height: 52px; border-radius: 1rem; font-size: var(--text-sm); font-weight: 700; color: var(--color-text-muted);
+      display: grid; place-items: center; gap: 0.12rem;
+    }
+    .tab-btn span { font-size: 0.72rem; }
+    .tab-btn.active { background: var(--color-primary-highlight); color: var(--color-primary); }
+    .view { display: none; }
+    .view.active { display: block; }
+    .row { display: grid; gap: var(--space-3); }
+    .form-grid { display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
+    label { display: block; font-size: var(--text-xs); font-weight: 700; color: var(--color-text-muted); margin-bottom: 0.45rem; letter-spacing: 0.04em; text-transform: uppercase; }
+    .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .segmented {
+      display: inline-grid; grid-template-columns: repeat(3, 1fr); gap: 0.35rem; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 0.3rem;
+    }
+    .segmented button {
+      min-height: 40px; padding: 0 0.9rem; border-radius: var(--radius-full); font-size: var(--text-sm); color: var(--color-text-muted);
+    }
+    .segmented button.active { background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-sm); }
+    .list { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+    .item {
+      display: grid; gap: var(--space-3); grid-template-columns: 1fr auto; align-items: start; background: var(--color-surface);
+      border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4);
+    }
+    .item h4 { margin: 0 0 0.15rem; font-size: var(--text-base); }
+    .item p { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-full); font-size: var(--text-xs);
+      background: var(--color-surface-2); border: 1px solid var(--color-border);
+    }
+    .metric { font-weight: 700; font-size: var(--text-base); }
+    .empty {
+      border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: var(--space-8) var(--space-4); text-align: center; color: var(--color-text-muted);
+      background: color-mix(in srgb, var(--color-surface-2) 75%, transparent);
+    }
+    .progress-wrap { margin-top: var(--space-3); }
+    .progress-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
+    .progress { height: 12px; background: var(--color-surface-2); border-radius: var(--radius-full); overflow: hidden; border: 1px solid var(--color-border); margin-top: 0.6rem; }
+    .bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 55%, white)); border-radius: inherit; transition: width 300ms ease; }
+    .note {
+      font-size: var(--text-sm); color: var(--color-text-muted); background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-border)); border-radius: var(--radius-lg); padding: 0.9rem 1rem;
+    }
+    .tiny { font-size: var(--text-xs); color: var(--color-text-faint); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.4rem; margin-top: var(--space-3); }
+    .day-chip {
+      padding: 0.5rem 0.25rem; text-align: center; border-radius: 0.85rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-size: var(--text-xs);
+    }
+    .day-chip strong { display: block; font-size: var(--text-sm); color: var(--color-text); }
+    .history-list { margin-top: var(--space-3); }
+    .history-entry {
+      display: flex; justify-content: space-between; align-items: center; gap: var(--space-2);
+      padding: 0.5rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--color-border);
+      background: var(--color-surface-2); font-size: var(--text-xs);
+    }
+    .history-entry button { font-size: inherit; padding: 0.25rem 0.6rem; }
+    .fab {
+      position: fixed; right: 1rem; bottom: 5.5rem; min-width: 56px; min-height: 56px; border-radius: 50%; background: var(--color-primary); color: white; box-shadow: var(--shadow-md); display: none; place-items: center; z-index: 24;
+    }
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.44); display: none; align-items: end; justify-content: center; z-index: 30;
+      padding: var(--space-4);
+    }
+    .modal-backdrop.open { display: flex; }
+    .sheet {
+      width: min(100%, 720px); max-height: 90dvh; overflow: auto; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 1.2rem; padding: var(--space-4); box-shadow: var(--shadow-md);
+    }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-4); }
+    .sheet-head h3 { margin: 0; font-size: var(--text-lg); }
+    .stack { display: grid; gap: var(--space-4); }
+    .inline { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+    .app-footer {
+      max-width: 980px; margin: var(--space-4) auto var(--space-8); padding: var(--space-3) var(--space-4);
+      font-size: var(--text-xs); color: var(--color-text-muted); text-align: center;
+    }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+    @media (min-width: 760px) {
+      .hero { grid-template-columns: 1.15fr 0.85fr; }
+      .summary-grid, .stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .full { grid-column: 1 / -1; }
+      .fab { display: grid; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main" class="sr-only">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9-9 4.03-9 9 4.03 9 9 9Z"></path>
+            <path d="M12 7v5l3 3"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>HealthyDay</h1>
+          <p>Track meals, workouts &amp; progress every day</p>
+        </div>
+      </div>
+      <div class="inline">
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Theme">
+          <svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="app">
+    <section class="hero">
+      <article class="card accent">
+        <div class="inline" style="justify-content: space-between; align-items: center; gap: 0.75rem;">
+          <div>
+            <h2 class="section-title">Today at a glance</h2>
+            <p class="meta">Track food calories, protein, workouts, and steps in one simple mobile screen.</p>
+          </div>
+          <div>
+            <label for="dayPicker">Date</label>
+            <input id="dayPicker" type="date" />
+          </div>
+        </div>
+        <div class="summary-grid" style="margin-top: 1rem;">
+          <div class="summary-tile">
+            <div class="label">Calories</div>
+            <div class="value" id="todayCalories">0</div>
+            <div class="sub">Target <span id="calTargetText">1900</span></div>
+          </div>
+          <div class="summary-tile success">
+            <div class="label">Protein</div>
+            <div class="value" id="todayProtein">0g</div>
+            <div class="sub">Aim 140g+</div>
+          </div>
+          <div class="summary-tile warning">
+            <div class="label">Exercise</div>
+            <div class="value" id="todayMinutes">0m</div>
+            <div class="sub">Target 60m</div>
+          </div>
+          <div class="summary-tile">
+            <div class="label">Steps</div>
+            <div class="value" id="todaySteps">0</div>
+            <div class="sub">Walking matters</div>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-head"><span>Calorie budget</span><strong id="budgetStatus">1900 left</strong></div>
+          <div class="progress"><div class="bar" id="budgetBar"></div></div>
+        </div>
+      </article>
+      <aside class="card">
+        <h2 class="section-title">Weekly focus</h2>
+        <div class="week-grid">
+          <div class="day-chip"><span>Mon</span><strong>Gym</strong></div>
+          <div class="day-chip"><span>Tue</span><strong>Cardio</strong></div>
+          <div class="day-chip"><span>Wed</span><strong>Gym</strong></div>
+          <div class="day-chip"><span>Thu</span><strong>Walk</strong></div>
+          <div class="day-chip"><span>Fri</span><strong>Gym</strong></div>
+          <div class="day-chip"><span>Sat</span><strong>Mixed</strong></div>
+          <div class="day-chip"><span>Sun</span><strong>Rest</strong></div>
+        </div>
+        <p class="note" style="margin-top: 1rem;">Best result: keep meals simple, hit protein, and log something every day even if it is just steps and one walk.</p>
+      </aside>
+    </section>
+
+    <section id="dashboardView" class="view active">
+      <div class="stats-grid">
+        <article class="card">
+          <h3>Nutrition trend (current day)</h3>
+          <p class="metric" id="avgCalories">0 kcal</p>
+          <p class="meta">Average calories per logged day</p>
+        </article>
+        <article class="card">
+          <h3>Protein trend (current day)</h3>
+          <p class="metric" id="avgProtein">0 g</p>
+          <p class="meta">Average protein per logged day</p>
+        </article>
+        <article class="card">
+          <h3>Workout count</h3>
+          <p class="metric" id="workoutCount">0</p>
+          <p class="meta">Sessions logged</p>
+        </article>
+        <article class="card">
+          <h3>Exercise minutes</h3>
+          <p class="metric" id="exerciseTotal">0</p>
+          <p class="meta">Total minutes logged</p>
+        </article>
+      </div>
+
+      <div class="row" style="margin-top: 1rem;">
+        <article class="card">
+          <div class="inline" style="justify-content: space-between; align-items: start; width: 100%;">
+            <div>
+              <h3>Profile & targets</h3>
+              <p class="meta">Optional profile fields help you personalize your targets. No data leaves this device.</p>
+            </div>
+          </div>
+          <div class="form-grid" style="margin-top: 1rem;">
+            <div>
+              <label for="displayName">Name (optional)</label>
+              <input type="text" id="displayName" placeholder="Your name" />
+            </div>
+            <div>
+              <label for="goalType">Goal</label>
+              <select id="goalType">
+                <option value="">Select</option>
+                <option>Fat loss</option>
+                <option>Muscle gain</option>
+                <option>Maintenance</option>
+                <option>General health</option>
+              </select>
+            </div>
+            <div>
+              <label for="dietType">Diet style</label>
+              <select id="dietType">
+                <option value="">Select</option>
+                <option>Vegetarian</option>
+                <option>Vegan</option>
+                <option>Non-vegetarian</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="dailyCalorieTarget">Daily calorie target</label>
+              <input type="number" id="dailyCalorieTarget" min="1000" max="4000" step="50" value="1900" />
+            </div>
+            <div>
+              <label for="dailyProteinTarget">Daily protein target (g)</label>
+              <input type="number" id="dailyProteinTarget" min="40" max="250" step="5" value="140" />
+            </div>
+            <div>
+              <label for="dailyStepTarget">Daily steps target</label>
+              <input type="number" id="dailyStepTarget" min="1000" max="25000" step="500" value="6000" />
+            </div>
+            <div>
+              <label for="defaultWorkoutTarget">Workout target (min)</label>
+              <input type="number" id="defaultWorkoutTarget" min="10" max="180" step="5" value="60" />
+            </div>
+          </div>
+          <div class="actions" style="margin-top: 1rem;">
+            <button class="btn btn-primary" id="saveTargets">Save profile & targets</button>
+            <button class="btn btn-secondary" id="exportData">Export JSON</button>
+            <button class="btn btn-danger" id="resetData">Reset current day only</button>
+          </div>
+        </article>
+
+        <article class="card">
+          <h3>Today&apos;s quick notes</h3>
+          <div class="form-grid" style="margin-top: 1rem;">
+            <div class="full">
+              <label for="stepsInput">Today&apos;s steps</label>
+              <input type="number" id="stepsInput" min="0" step="100" placeholder="e.g. 4500" />
+            </div>
+          </div>
+          <div class="actions" style="margin-top: 1rem;">
+            <button class="btn btn-primary" id="saveSteps">Save steps</button>
+          </div>
+          <p class="tiny" style="margin-top: 0.75rem;">Data stays in your browser using IndexedDB. Export JSON if you want an extra backup.</p>
+        </article>
+      </div>
+
+      <article class="card" style="margin-top: 1rem;">
+        <h3>History (stored locally)</h3>
+        <p class="meta">Tap a day to load its meals and workouts. This history is kept in your browser only.</p>
+        <div id="historyList" class="history-list"></div>
+      </article>
+    </section>
+
+    <section id="dietView" class="view">
+      <article class="card">
+        <h2 class="section-title">Add food entry</h2>
+        <p class="meta">Use your regular foods: dal, rice, oats, curd, paneer, soya chunks, vegetables, whey.</p>
+        <div class="stack" style="margin-top: 1rem;">
+          <div class="segmented" id="mealTypeGroup" aria-label="Meal type">
+            <button class="active" data-meal="Breakfast" type="button">Breakfast</button>
+            <button data-meal="Lunch" type="button">Lunch</button>
+            <button data-meal="Dinner" type="button">Dinner</button>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label for="foodName">Food name</label>
+              <input id="foodName" type="text" placeholder="e.g. Oats + curd" />
+            </div>
+            <div>
+              <label for="foodCalories">Calories</label>
+              <input id="foodCalories" type="number" min="0" step="1" placeholder="e.g. 320" />
+            </div>
+            <div>
+              <label for="foodProtein">Protein (g)</label>
+              <input id="foodProtein" type="number" min="0" step="1" placeholder="e.g. 22" />
+            </div>
+            <div>
+              <label for="foodTime">Time</label>
+              <input id="foodTime" type="time" />
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" id="addFood">Add food</button>
+            <button class="btn btn-secondary preset-add" data-name="Whey protein" data-calories="120" data-protein="24">+ Whey scoop</button>
+            <button class="btn btn-secondary preset-add" data-name="Paneer meal" data-calories="350" data-protein="22">+ Paneer meal</button>
+            <button class="btn btn-secondary preset-add" data-name="Dal + rice" data-calories="420" data-protein="16">+ Dal rice</button>
+          </div>
+        </div>
+      </article>
+      <article class="card" style="margin-top: 1rem;">
+        <div class="inline" style="justify-content: space-between; width: 100%; align-items: start;">
+          <div>
+            <h3>Today&apos;s food log</h3>
+            <p class="meta">Delete any item if calories were estimated wrong.</p>
+          </div>
+          <div class="pill"><span>Total</span><strong id="foodListTotal">0 kcal</strong></div>
+        </div>
+        <div id="foodList" class="list"></div>
+      </article>
+    </section>
+
+    <section id="exerciseView" class="view">
+      <article class="card">
+        <h2 class="section-title">Log exercise</h2>
+        <p class="meta">Built around your Mon–Sat 7:30–8:30 AM workout routine.</p>
+        <div class="stack" style="margin-top: 1rem;">
+          <div class="segmented" id="workoutTypeGroup" aria-label="Workout type">
+            <button class="active" data-workout="Strength" type="button">Strength</button>
+            <button data-workout="Cardio" type="button">Cardio</button>
+            <button data-workout="Walk" type="button">Walk</button>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label for="exerciseName">Exercise session</label>
+              <input id="exerciseName" type="text" placeholder="e.g. Full body A" />
+            </div>
+            <div>
+              <label for="exerciseMinutes">Minutes</label>
+              <input id="exerciseMinutes" type="number" min="0" step="5" placeholder="e.g. 60" />
+            </div>
+            <div>
+              <label for="exerciseCalories">Calories burned (optional)</label>
+              <input id="exerciseCalories" type="number" min="0" step="1" placeholder="e.g. 300" />
+            </div>
+            <div>
+              <label for="exerciseIntensity">Intensity</label>
+              <select id="exerciseIntensity">
+                <option>Easy</option>
+                <option selected>Moderate</option>
+                <option>Hard</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" id="addExercise">Add workout</button>
+            <button class="btn btn-secondary exercise-preset" data-name="Morning gym" data-minutes="60" data-type="Strength">+ 60m gym</button>
+            <button class="btn btn-secondary exercise-preset" data-name="Brisk walk" data-minutes="30" data-type="Walk">+ 30m walk</button>
+          </div>
+        </div>
+      </article>
+      <article class="card" style="margin-top: 1rem;">
+        <div class="inline" style="justify-content: space-between; width: 100%; align-items: start;">
+          <div>
+            <h3>Workout log</h3>
+            <p class="meta">Keep it simple: consistency beats perfect detail.</p>
+          </div>
+          <div class="pill"><span>Sessions</span><strong id="exerciseListCount">0</strong></div>
+        </div>
+        <div id="exerciseList" class="list"></div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    Built by a HealthyDay user &mdash; edit this footer in the HTML to add your name if you want.
+  </footer>
+
+  <button class="fab" id="quickAddBtn" aria-label="Quick add">+
+  </button>
+
+  <nav class="tabs" aria-label="Primary tabs">
+    <button class="tab-btn active" data-view="dashboardView" aria-current="page">Home <span>Summary</span></button>
+    <button class="tab-btn" data-view="dietView">Diet <span>Calories</span></button>
+    <button class="tab-btn" data-view="exerciseView">Exercise <span>Workout</span></button>
+  </nav>
+
+  <div class="modal-backdrop" id="quickModal" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="quickModalTitle">
+      <div class="sheet-head">
+        <h3 id="quickModalTitle">Quick add</h3>
+        <button class="icon-btn" id="closeModal" aria-label="Close quick add">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="stack">
+        <button class="btn btn-primary preset-add" data-name="Whey protein" data-calories="120" data-protein="24">Add whey scoop</button>
+        <button class="btn btn-secondary exercise-preset" data-name="Morning gym" data-minutes="60" data-type="Strength">Add 60m gym</button>
+        <button class="btn btn-secondary exercise-preset" data-name="Brisk walk" data-minutes="30" data-type="Walk">Add 30m walk</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const DB_NAME = 'healthyday-db';
+    const DB_VERSION = 1;
+    const STORE_DAYS = 'days';
+    let db = null;
+
+    const state = {
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+      currentDate: null,
+      profile: {
+        displayName: '',
+        goalType: '',
+        dietType: ''
+      },
+      selectedMeal: 'Breakfast',
+      selectedWorkout: 'Strength',
+      targets: { calories: 1900, protein: 140, steps: 6000, minutes: 60 },
+      stepsToday: 0,
+      foods: [],
+      exercises: []
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const views = Array.from(document.querySelectorAll('.view'));
+    const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+
+    function toDateInputValue(date) {
+      const d = date instanceof Date ? date : new Date(date);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function prettyDateLabel(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      if (Number.isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(STORE_DAYS)) {
+            db.createObjectStore(STORE_DAYS, { keyPath: 'date' });
+          }
+        };
+        request.onsuccess = (event) => {
+          db = event.target.result;
+          resolve(db);
+        };
+        request.onerror = (event) => reject(event.target.error);
+      });
+    }
+
+    function loadDay(dateStr) {
+      return new Promise((resolve, reject) => {
+        if (!db) return resolve(null);
+        const tx = db.transaction(STORE_DAYS, 'readonly');
+        const store = tx.objectStore(STORE_DAYS);
+        const req = store.get(dateStr);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function saveCurrentDay() {
+      if (!db || !state.currentDate) return;
+      const record = {
+        date: state.currentDate,
+        profile: state.profile,
+        targets: state.targets,
+        stepsToday: state.stepsToday,
+        foods: state.foods,
+        exercises: state.exercises
+      };
+      const tx = db.transaction(STORE_DAYS, 'readwrite');
+      const store = tx.objectStore(STORE_DAYS);
+      store.put(record);
+      tx.oncomplete = () => renderHistory();
+    }
+
+    function loadAllDays() {
+      return new Promise((resolve, reject) => {
+        if (!db) return resolve([]);
+        const tx = db.transaction(STORE_DAYS, 'readonly');
+        const store = tx.objectStore(STORE_DAYS);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function number(n) {
+      return new Intl.NumberFormat().format(Math.round(n || 0));
+    }
+
+    function totals() {
+      const calories = state.foods.reduce((a, x) => a + Number(x.calories || 0), 0);
+      const protein = state.foods.reduce((a, x) => a + Number(x.protein || 0), 0);
+      const minutes = state.exercises.reduce((a, x) => a + Number(x.minutes || 0), 0);
+      const burn = state.exercises.reduce((a, x) => a + Number(x.burn || 0), 0);
+      return { calories, protein, minutes, burn };
+    }
+
+    function setTheme(theme) {
+      state.theme = theme;
+      document.documentElement.setAttribute('data-theme', theme);
+      $('themeIcon').innerHTML = theme === 'dark'
+        ? '<circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>'
+        : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+    }
+
+    function renderSummary() {
+      const t = totals();
+      $('todayCalories').textContent = number(t.calories);
+      $('todayProtein').textContent = number(t.protein) + 'g';
+      $('todayMinutes').textContent = number(t.minutes) + 'm';
+      $('todaySteps').textContent = number(state.stepsToday);
+      $('calTargetText').textContent = number(state.targets.calories);
+
+      const left = state.targets.calories - t.calories;
+      $('budgetStatus').textContent = left >= 0 ? number(left) + ' left' : number(Math.abs(left)) + ' over';
+      const pct = state.targets.calories > 0 ? Math.max(0, Math.min(100, (t.calories / state.targets.calories) * 100 || 0)) : 0;
+      $('budgetBar').style.width = pct + '%';
+
+      const loggedDays = Math.max(1, state.foods.length ? 1 : 0);
+      $('avgCalories').textContent = number(t.calories / loggedDays) + ' kcal';
+      $('avgProtein').textContent = number(t.protein / loggedDays) + ' g';
+      $('workoutCount').textContent = number(state.exercises.length);
+      $('exerciseTotal').textContent = number(t.minutes);
+      $('stepsInput').value = state.stepsToday || '';
+
+      // Profile fields
+      $('displayName').value = state.profile.displayName || '';
+      $('goalType').value = state.profile.goalType || '';
+      $('dietType').value = state.profile.dietType || '';
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function renderFoods() {
+      const wrap = $('foodList');
+      $('foodListTotal').textContent = number(totals().calories) + ' kcal';
+      if (!state.foods.length) {
+        wrap.innerHTML = '<div class="empty">No meals logged for this day. Add your first meal or tap a preset like whey or dal rice.</div>';
+        return;
+      }
+      const dateLabel = state.currentDate ? prettyDateLabel(state.currentDate) : '';
+      wrap.innerHTML = state.foods.map((item, idx) => `
+        <article class="item">
+          <div>
+            <div class="inline" style="margin-bottom:0.4rem;">
+              <span class="pill">${item.meal}</span>
+              <span class="pill">${item.time || dateLabel}</span>
+            </div>
+            <h4>${escapeHtml(item.name)}</h4>
+            <p>${number(item.calories)} kcal · ${number(item.protein)} g protein</p>
+          </div>
+          <div class="actions" style="justify-content:flex-end;">
+            <button class="btn btn-danger" onclick="removeFood(${idx})">Delete</button>
+          </div>
+        </article>`).join('');
+    }
+
+    function renderExercises() {
+      const wrap = $('exerciseList');
+      $('exerciseListCount').textContent = number(state.exercises.length);
+      if (!state.exercises.length) {
+        wrap.innerHTML = '<div class="empty">No workouts logged for this day. Add your gym session, cardio, or walk.</div>';
+        return;
+      }
+      wrap.innerHTML = state.exercises.map((item, idx) => `
+        <article class="item">
+          <div>
+            <div class="inline" style="margin-bottom:0.4rem;">
+              <span class="pill">${item.type}</span>
+              <span class="pill">${item.intensity || 'Moderate'}</span>
+            </div>
+            <h4>${escapeHtml(item.name)}</h4>
+            <p>${number(item.minutes)} minutes${item.burn ? ' · ' + number(item.burn) + ' kcal burn' : ''}</p>
+          </div>
+          <div class="actions" style="justify-content:flex-end;">
+            <button class="btn btn-danger" onclick="removeExercise(${idx})">Delete</button>
+          </div>
+        </article>`).join('');
+    }
+
+    function renderHistory() {
+      loadAllDays().then(days => {
+        const container = $('historyList');
+        if (!days.length) {
+          container.innerHTML = '<div class="empty">No history yet. Once you save a day with meals or workouts, it will appear here.</div>';
+          return;
+        }
+        const sorted = days.slice().sort((a, b) => a.date < b.date ? 1 : -1);
+        const items = sorted.map(day => {
+          const t = {
+            calories: day.foods?.reduce((acc, x) => acc + Number(x.calories || 0), 0) || 0,
+            protein: day.foods?.reduce((acc, x) => acc + Number(x.protein || 0), 0) || 0,
+            minutes: day.exercises?.reduce((acc, x) => acc + Number(x.minutes || 0), 0) || 0
+          };
+          const isCurrent = day.date === state.currentDate;
+          return `<div class="history-entry">
+            <div>
+              <strong>${prettyDateLabel(day.date)}</strong>
+              <div class="tiny">${number(t.calories)} kcal · ${number(t.protein)} g · ${number(t.minutes)} min</div>
+            </div>
+            <button class="btn btn-secondary" data-load-date="${day.date}">${isCurrent ? 'Viewing' : 'Load'}</button>
+          </div>`;
+        }).join('');
+        container.innerHTML = items;
+        Array.from(container.querySelectorAll('button[data-load-date]')).forEach(btn => {
+          btn.addEventListener('click', () => switchToDate(btn.getAttribute('data-load-date')));
+        });
+      }).catch(() => {
+        $('historyList').innerHTML = '<div class="empty">Unable to load history from IndexedDB.</div>';
+      });
+    }
+
+    function updateView(viewId) {
+      views.forEach(v => v.classList.toggle('active', v.id === viewId));
+      tabs.forEach(tab => {
+        const active = tab.dataset.view === viewId;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-current', active ? 'page' : 'false');
+      });
+    }
+
+    function saveProfileFromInputs() {
+      state.profile.displayName = $('displayName').value.trim();
+      state.profile.goalType = $('goalType').value;
+      state.profile.dietType = $('dietType').value;
+      state.targets.calories = Number($('dailyCalorieTarget').value || 1900);
+      state.targets.protein = Number($('dailyProteinTarget').value || 140);
+      state.targets.steps = Number($('dailyStepTarget').value || 6000);
+      state.targets.minutes = Number($('defaultWorkoutTarget').value || 60);
+    }
+
+    function addFoodEntry(payload) {
+      state.foods.unshift({
+        meal: payload.meal || state.selectedMeal,
+        name: payload.name,
+        calories: Number(payload.calories || 0),
+        protein: Number(payload.protein || 0),
+        time: payload.time || ''
+      });
+      renderAll();
+      saveCurrentDay();
+    }
+
+    function addExerciseEntry(payload) {
+      state.exercises.unshift({
+        type: payload.type || state.selectedWorkout,
+        name: payload.name,
+        minutes: Number(payload.minutes || 0),
+        burn: Number(payload.burn || 0),
+        intensity: payload.intensity || 'Moderate'
+      });
+      renderAll();
+      saveCurrentDay();
+    }
+
+    function exportData() {
+      const data = {
+        exportedAt: new Date().toISOString(),
+        currentDate: state.currentDate,
+        state
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'healthyday-backup.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function resetCurrentDay() {
+      if (!confirm('Reset all tracked food, exercise, and steps for this day?')) return;
+      state.foods = [];
+      state.exercises = [];
+      state.stepsToday = 0;
+      renderAll();
+      saveCurrentDay();
+    }
+
+    window.removeFood = (idx) => {
+      state.foods.splice(idx, 1);
+      renderAll();
+      saveCurrentDay();
+    };
+
+    window.removeExercise = (idx) => {
+      state.exercises.splice(idx, 1);
+      renderAll();
+      saveCurrentDay();
+    };
+
+    function renderAll() {
+      renderSummary();
+      renderFoods();
+      renderExercises();
+    }
+
+    function switchToDate(dateStr) {
+      if (!dateStr) return;
+      if (state.currentDate === dateStr) return;
+      state.currentDate = dateStr;
+      $('dayPicker').value = state.currentDate;
+      loadDay(state.currentDate).then(day => {
+        if (day) {
+          state.profile = day.profile || { displayName: '', goalType: '', dietType: '' };
+          state.targets = day.targets || { calories: 1900, protein: 140, steps: 6000, minutes: 60 };
+          state.stepsToday = day.stepsToday || 0;
+          state.foods = day.foods || [];
+          state.exercises = day.exercises || [];
+        } else {
+          state.foods = [];
+          state.exercises = [];
+          state.stepsToday = 0;
+        }
+        renderAll();
+        renderHistory();
+      });
+    }
+
+    function initEventHandlers() {
+      tabs.forEach(tab => tab.addEventListener('click', () => updateView(tab.dataset.view)));
+      $('themeToggle').addEventListener('click', () => setTheme(state.theme === 'dark' ? 'light' : 'dark'));
+      $('saveTargets').addEventListener('click', () => {
+        saveProfileFromInputs();
+        renderAll();
+        saveCurrentDay();
+      });
+      $('exportData').addEventListener('click', exportData);
+      $('resetData').addEventListener('click', resetCurrentDay);
+      $('saveSteps').addEventListener('click', () => {
+        state.stepsToday = Number($('stepsInput').value || 0);
+        renderAll();
+        saveCurrentDay();
+      });
+
+      Array.from(document.querySelectorAll('#mealTypeGroup button')).forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedMeal = btn.dataset.meal;
+          document.querySelectorAll('#mealTypeGroup button').forEach(b => b.classList.toggle('active', b === btn));
+        });
+      });
+
+      Array.from(document.querySelectorAll('#workoutTypeGroup button')).forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedWorkout = btn.dataset.workout;
+          document.querySelectorAll('#workoutTypeGroup button').forEach(b => b.classList.toggle('active', b === btn));
+        });
+      });
+
+      $('addFood').addEventListener('click', () => {
+        const name = $('foodName').value.trim();
+        const calories = $('foodCalories').value;
+        const protein = $('foodProtein').value;
+        const time = $('foodTime').value;
+        if (!name || !calories) return alert('Enter at least food name and calories.');
+        addFoodEntry({ name, calories, protein, time, meal: state.selectedMeal });
+        $('foodName').value = '';
+        $('foodCalories').value = '';
+        $('foodProtein').value = '';
+        $('foodTime').value = '';
+      });
+
+      $('addExercise').addEventListener('click', () => {
+        const name = $('exerciseName').value.trim();
+        const minutes = $('exerciseMinutes').value;
+        const burn = $('exerciseCalories').value;
+        const intensity = $('exerciseIntensity').value;
+        if (!name || !minutes) return alert('Enter exercise name and minutes.');
+        addExerciseEntry({ name, minutes, burn, intensity, type: state.selectedWorkout });
+        $('exerciseName').value = '';
+        $('exerciseMinutes').value = '';
+        $('exerciseCalories').value = '';
+        $('exerciseIntensity').value = 'Moderate';
+      });
+
+      Array.from(document.querySelectorAll('.preset-add')).forEach(btn => {
+        btn.addEventListener('click', () => {
+          addFoodEntry({
+            name: btn.dataset.name,
+            calories: btn.dataset.calories,
+            protein: btn.dataset.protein,
+            meal: state.selectedMeal,
+            time: ''
+          });
+          openModal(false);
+          updateView('dietView');
+        });
+      });
+
+      Array.from(document.querySelectorAll('.exercise-preset')).forEach(btn => {
+        btn.addEventListener('click', () => {
+          addExerciseEntry({
+            name: btn.dataset.name,
+            minutes: btn.dataset.minutes,
+            type: btn.dataset.type,
+            intensity: 'Moderate'
+          });
+          openModal(false);
+          updateView('exerciseView');
+        });
+      });
+
+      $('quickAddBtn').addEventListener('click', () => openModal(true));
+      $('closeModal').addEventListener('click', () => openModal(false));
+      $('quickModal').addEventListener('click', (e) => {
+        if (e.target === $('quickModal')) openModal(false);
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') openModal(false);
+      });
+
+      $('dayPicker').addEventListener('change', () => {
+        const v = $('dayPicker').value;
+        if (v) switchToDate(v);
+      });
+    }
+
+    function openModal(show = true) {
+      $('quickModal').classList.toggle('open', show);
+      $('quickModal').setAttribute('aria-hidden', show ? 'false' : 'true');
+    }
+
+    function bootstrap() {
+      state.currentDate = toDateInputValue(new Date());
+      $('dayPicker').value = state.currentDate;
+      setTheme(state.theme);
+      openDatabase().then(() => {
+        return loadDay(state.currentDate);
+      }).then(day => {
+        if (day) {
+          state.profile = day.profile || { displayName: '', goalType: '', dietType: '' };
+          state.targets = day.targets || { calories: 1900, protein: 140, steps: 6000, minutes: 60 };
+          state.stepsToday = day.stepsToday || 0;
+          state.foods = day.foods || [];
+          state.exercises = day.exercises || [];
+        }
+        initEventHandlers();
+        renderAll();
+        renderHistory();
+      }).catch(() => {
+        initEventHandlers();
+        renderAll();
+      });
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>

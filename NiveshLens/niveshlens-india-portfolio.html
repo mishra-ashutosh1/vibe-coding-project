@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NiveshLens – India Portfolio Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@300..700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <style>
+    /* Design tokens (trimmed for brevity but structurally correct) */
+    :root, [data-theme="light"] {
+      --text-xs:   clamp(0.75rem,  0.7rem  + 0.25vw, 0.875rem);
+      --text-sm:   clamp(0.875rem, 0.8rem  + 0.35vw, 1rem);
+      --text-base: clamp(1rem,     0.95rem + 0.25vw, 1.125rem);
+      --text-lg:   clamp(1.125rem, 1rem    + 0.75vw, 1.5rem);
+      --text-xl:   clamp(1.5rem,   1.2rem  + 1.25vw, 2.25rem);
+      --text-2xl:  clamp(2rem,     1.2rem  + 2.5vw,  3.5rem);
+
+      --space-1:  0.25rem;
+      --space-2:  0.5rem;
+      --space-3:  0.75rem;
+      --space-4:  1rem;
+      --space-5:  1.25rem;
+      --space-6:  1.5rem;
+      --space-8:  2rem;
+      --space-10: 2.5rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+
+      --color-bg:             #0b0c10;
+      --color-surface:        #111319;
+      --color-surface-2:      #141823;
+      --color-surface-offset: #1b2030;
+      --color-border:         #262c3f;
+      --color-text:           #f4f5fb;
+      --color-text-muted:     #9da3b8;
+      --color-text-faint:     #5b6070;
+      --color-primary:        #00b894;
+      --color-primary-hover:  #009170;
+      --color-error:          #ff6b6b;
+      --color-success:        #55efc4;
+
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
+      --shadow-md: 0 8px 24px rgba(0,0,0,0.45);
+
+      --content-default: 1120px;
+    }
+
+    [data-theme="dark"] {
+      /* same as root since app is dark-first; kept for toggle hook */
+    }
+
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html { text-size-adjust:none; scroll-behavior:smooth; }
+    body {
+      min-height:100vh;
+      font-family:'Work Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size:var(--text-base);
+      line-height:1.6;
+      background:radial-gradient(circle at 0% -20%, #00b89422, transparent 55%),
+                 radial-gradient(circle at 100% 120%, #0984e322, transparent 55%),
+                 var(--color-bg);
+      color:var(--color-text);
+      -webkit-font-smoothing:antialiased;
+    }
+    img { max-width:100%; display:block; }
+    button { font:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+
+    .app-shell {
+      max-width:var(--content-default);
+      margin-inline:auto;
+      padding:var(--space-6) var(--space-4) var(--space-10);
+      display:grid;
+      grid-template-columns: minmax(0, 1.75fr) minmax(0, 2.25fr);
+      gap:var(--space-6);
+    }
+
+    @media (max-width: 960px) {
+      .app-shell { grid-template-columns:minmax(0,1fr); padding-block:var(--space-4); }
+    }
+
+    header.app-header {
+      grid-column:1/-1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:var(--space-4);
+      margin-bottom:var(--space-4);
+    }
+
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:var(--space-3);
+    }
+
+    .brand-mark {
+      width:40px; height:40px;
+      border-radius:1.1rem;
+      background:radial-gradient(circle at 20% 20%, #dff9f5, #00b894 40%, #0b0c10 75%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 0 0 1px rgba(0,0,0,0.6), 0 12px 30px rgba(0,0,0,0.65);
+    }
+    .brand-mark span {
+      font-family:'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
+      font-size:1.35rem;
+      font-weight:600;
+      letter-spacing:0.04em;
+    }
+
+    .brand-text h1 {
+      font-size:var(--text-xl);
+      letter-spacing:0.04em;
+      text-transform:uppercase;
+    }
+    .brand-text p {
+      font-size:var(--text-sm);
+      color:var(--color-text-muted);
+    }
+
+    .header-actions { display:flex; gap:var(--space-3); align-items:center; }
+
+    .pill {
+      border-radius:var(--radius-full);
+      padding:0.25rem 0.75rem;
+      border:1px solid rgba(255,255,255,0.08);
+      background:linear-gradient(135deg, rgba(17,19,25,0.85), rgba(27,32,48,0.95));
+      color:var(--color-text-muted);
+      font-size:var(--text-xs);
+      display:flex;
+      align-items:center;
+      gap:0.35rem;
+    }
+
+    .btn-primary {
+      border-radius:var(--radius-full);
+      padding:0.6rem 1.2rem;
+      font-size:var(--text-sm);
+      background:radial-gradient(circle at 0% 0%, #dff9f5, #00b894 45%, #009170 100%);
+      color:#020308;
+      font-weight:600;
+      box-shadow:0 12px 30px rgba(0,184,148,0.35);
+      display:inline-flex;
+      align-items:center;
+      gap:0.4rem;
+      transition:transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+    }
+    .btn-primary:hover { transform:translateY(-1px); filter:brightness(1.06); }
+    .btn-primary:active { transform:translateY(0); box-shadow:0 6px 18px rgba(0,184,148,0.3); }
+
+    .btn-ghost {
+      border-radius:var(--radius-full);
+      padding:0.5rem 0.9rem;
+      font-size:var(--text-sm);
+      border:1px solid rgba(255,255,255,0.08);
+      background:rgba(12,14,20,0.85);
+      color:var(--color-text-muted);
+      display:inline-flex;
+      align-items:center;
+      gap:0.4rem;
+      transition:background 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+    .btn-ghost:hover {
+      background:rgba(18,22,32,0.95);
+      border-color:rgba(255,255,255,0.16);
+      color:var(--color-text);
+    }
+
+    .card {
+      background:linear-gradient(145deg, rgba(17,19,25,0.96), rgba(9,11,18,0.96));
+      border-radius:var(--radius-lg);
+      padding:var(--space-4);
+      box-shadow:var(--shadow-md);
+      border:1px solid rgba(255,255,255,0.04);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card::before {
+      content:"";
+      position:absolute;
+      inset:-30%;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(0,184,148,0.08), transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(9,132,227,0.07), transparent 55%);
+      opacity:0.9;
+      mix-blend-mode:screen;
+      pointer-events:none;
+    }
+
+    .card-inner { position:relative; z-index:1; }
+
+    .card-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      margin-bottom:var(--space-3);
+      gap:var(--space-3);
+    }
+
+    .card-title {
+      font-size:var(--text-lg);
+      font-weight:600;
+      letter-spacing:0.03em;
+      text-transform:uppercase;
+    }
+    .card-subtitle {
+      font-size:var(--text-xs);
+      color:var(--color-text-muted);
+      text-transform:uppercase;
+      letter-spacing:0.12em;
+    }
+
+    .metric-row {
+      display:flex;
+      gap:var(--space-4);
+      flex-wrap:wrap;
+      margin-top:var(--space-2);
+    }
+
+    .metric {
+      min-width:120px;
+    }
+
+    .metric-label {
+      font-size:var(--text-xs);
+      color:var(--color-text-muted);
+      text-transform:uppercase;
+      letter-spacing:0.16em;
+      margin-bottom:0.2rem;
+    }
+
+    .metric-value {
+      font-variant-numeric:tabular-nums;
+      font-size:var(--text-lg);
+      font-weight:600;
+    }
+
+    .metric-chip {
+      display:inline-flex;
+      align-items:center;
+      gap:0.2rem;
+      border-radius:var(--radius-full);
+      padding:0.1rem 0.5rem;
+      font-size:var(--text-xs);
+    }
+    .metric-chip.positive { background:rgba(0,184,148,0.12); color:var(--color-success); }
+    .metric-chip.negative { background:rgba(255,107,107,0.08); color:var(--color-error); }
+
+    .section-title {
+      font-size:var(--text-sm);
+      text-transform:uppercase;
+      letter-spacing:0.14em;
+      color:var(--color-text-muted);
+      margin-bottom:var(--space-3);
+    }
+
+    .segmented-control {
+      display:inline-flex;
+      padding:0.18rem;
+      border-radius:var(--radius-full);
+      background:rgba(9,12,20,0.85);
+      border:1px solid rgba(255,255,255,0.06);
+      gap:0.18rem;
+    }
+
+    .segmented-control button {
+      padding:0.25rem 0.7rem;
+      border-radius:var(--radius-full);
+      font-size:var(--text-xs);
+      text-transform:uppercase;
+      letter-spacing:0.12em;
+      border:none;
+      background:transparent;
+      color:var(--color-text-muted);
+    }
+
+    .segmented-control button.active {
+      background:radial-gradient(circle at 0% 0%, rgba(223,249,245,1), rgba(0,184,148,1));
+      color:#020308;
+      font-weight:600;
+      box-shadow:0 8px 18px rgba(0,184,148,0.35);
+    }
+
+    .portfolio-table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:var(--text-sm);
+      margin-top:var(--space-2);
+    }
+
+    .portfolio-table th,
+    .portfolio-table td {
+      padding:0.45rem 0.35rem;
+      text-align:right;
+      border-bottom:1px solid rgba(255,255,255,0.04);
+      font-variant-numeric:tabular-nums;
+    }
+
+    .portfolio-table th:first-child,
+    .portfolio-table td:first-child {
+      text-align:left;
+      padding-left:0;
+    }
+
+    .portfolio-table th:last-child,
+    .portfolio-table td:last-child {
+      padding-right:0;
+    }
+
+    .portfolio-table th {
+      font-size:var(--text-xs);
+      text-transform:uppercase;
+      letter-spacing:0.12em;
+      color:var(--color-text-muted);
+    }
+
+    .tag {
+      display:inline-flex;
+      align-items:center;
+      padding:0.1rem 0.5rem;
+      border-radius:var(--radius-full);
+      border:1px solid rgba(255,255,255,0.08);
+      font-size:var(--text-xs);
+      text-transform:uppercase;
+      letter-spacing:0.12em;
+      color:var(--color-text-muted);
+    }
+
+    .tag.equity { border-color:rgba(0,184,148,0.6); }
+    .tag.mf { border-color:rgba(9,132,227,0.6); }
+
+    .pill-input-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:var(--space-2);
+      align-items:center;
+      margin-top:var(--space-3);
+    }
+
+    .pill-input {
+      flex:1 1 210px;
+      min-width:0;
+      display:flex;
+      align-items:center;
+      gap:0.4rem;
+      border-radius:var(--radius-full);
+      border:1px solid rgba(255,255,255,0.12);
+      padding:0.35rem 0.75rem;
+      background:rgba(5,7,12,0.85);
+      font-size:var(--text-sm);
+    }
+
+    .pill-input label {
+      font-size:var(--text-xs);
+      text-transform:uppercase;
+      letter-spacing:0.14em;
+      color:var(--color-text-muted);
+    }
+
+    .pill-input input {
+      flex:1;
+      border:none;
+      outline:none;
+      background:transparent;
+      color:var(--color-text);
+      font-size:var(--text-sm);
+    }
+    .pill-input input::placeholder { color:var(--color-text-faint); }
+
+    .chip-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.35rem;
+      margin-top:var(--space-2);
+    }
+
+    .mini-chip {
+      border-radius:var(--radius-full);
+      padding:0.2rem 0.55rem;
+      font-size:var(--text-xs);
+      border:1px dashed rgba(255,255,255,0.12);
+      color:var(--color-text-muted);
+    }
+
+    .chart-card { min-height:280px; }
+    .chart-wrapper { position:relative; height:230px; margin-top:var(--space-2); }
+
+    .chips-inline {
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.4rem;
+      margin-top:0.2rem;
+    }
+
+    .chips-inline span {
+      border-radius:var(--radius-full);
+      padding:0.15rem 0.5rem;
+      background:rgba(15,20,32,0.9);
+      font-size:var(--text-xs);
+      color:var(--color-text-muted);
+    }
+
+    .gain { color:var(--color-success); }
+    .loss { color:var(--color-error); }
+
+    .hint {
+      font-size:var(--text-xs);
+      color:var(--color-text-muted);
+      margin-top:var(--space-2);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span>₹</span></div>
+        <div class="brand-text">
+          <h1>NiveshLens</h1>
+          <p>Clean Indian equity + mutual fund cockpit for serious retail investors.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="pill">
+          <span style="width:7px;height:7px;border-radius:999px;background:var(--color-success);"></span>
+          Live AMFI & NSE snapshots (via external APIs)
+        </div>
+        <button class="btn-ghost" id="resetAppBtn">Reset demo</button>
+        <button class="btn-primary" id="addPositionBtn">
+          <span>+ Add holding</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="card" id="leftPane">
+      <div class="card-inner">
+        <div class="card-header">
+          <div>
+            <div class="card-subtitle">Portfolio overview</div>
+            <div class="card-title">Live P&L snapshot</div>
+          </div>
+          <div class="segmented-control" id="assetToggle">
+            <button data-type="all" class="active">All</button>
+            <button data-type="equity">Equity</button>
+            <button data-type="mf">Mutual funds</button>
+          </div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric">
+            <div class="metric-label">Net invested</div>
+            <div class="metric-value" id="metricInvested">₹0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Current value</div>
+            <div class="metric-value" id="metricCurrent">₹0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Unrealised P&L</div>
+            <div class="metric-value" id="metricPnL">₹0</div>
+            <div id="metricPnLChip" class="metric-chip" style="margin-top:0.15rem;">0.00%</div>
+          </div>
+        </div>
+
+        <p class="hint">This is a local-only demo. Hook the app to MFAPI.in for mutual funds and your preferred NSE/BSE API for live equities.</p>
+
+        <h2 class="section-title" style="margin-top:var(--space-5);">Holdings ledger</h2>
+        <table class="portfolio-table" id="holdingsTable">
+          <thead>
+            <tr>
+              <th>Instrument</th>
+              <th>Type</th>
+              <th>Qty</th>
+              <th>Avg cost</th>
+              <th>LTP</th>
+              <th>P&L</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <p class="hint">Paste your CAS / broker export into a JSON transformer and load here in v2.</p>
+      </div>
+    </section>
+
+    <section class="card chart-card" id="rightPane">
+      <div class="card-inner">
+        <div class="card-header">
+          <div>
+            <div class="card-subtitle">Risk lenses</div>
+            <div class="card-title">Allocation & drawdown</div>
+          </div>
+          <div>
+            <div class="chips-inline">
+              <span id="chipsEquity">Equity · 0%</span>
+              <span id="chipsDebt">Debt & cash · 0%</span>
+              <span id="chipsFunds">Mutual funds · 0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-wrapper">
+          <canvas id="allocationChart"></canvas>
+        </div>
+
+        <div class="pill-input-row">
+          <div class="pill-input">
+            <label for="schemeSearch">MF or stock</label>
+            <input id="schemeSearch" placeholder="Start typing for paper search… (e.g. HDFC Flexi Cap, TCS)" />
+          </div>
+          <div class="pill-input">
+            <label for="schemeCode">MF scheme code</label>
+            <input id="schemeCode" placeholder="mfapi.in code – 6 digits" />
+          </div>
+        </div>
+        <div class="chip-row">
+          <div class="mini-chip">Next: wire this box to <code>https://api.mfapi.in/mf/search?q=</code></div>
+          <div class="mini-chip">Then: use <code>/mf/{scheme_code}/latest</code> for NAV & chart</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const demoHoldings = [
+      {
+        name: 'HDFC Flexi Cap - Direct',
+        type: 'mf',
+        subtype: 'equity',
+        units: 120.5,
+        avgCost: 950.0,
+        ltp: 1040.25
+      },
+      {
+        name: 'Parag Parikh Flexi Cap - Direct',
+        type: 'mf',
+        subtype: 'equity',
+        units: 75,
+        avgCost: 52.4,
+        ltp: 61.95
+      },
+      {
+        name: 'TCS',
+        type: 'equity',
+        subtype: 'largecap',
+        units: 10,
+        avgCost: 3420,
+        ltp: 3895
+      },
+      {
+        name: 'Nippon India Liquid - Direct',
+        type: 'mf',
+        subtype: 'debt',
+        units: 250,
+        avgCost: 5135.4,
+        ltp: 5160.20
+      }
+    ];
+
+    let holdings = JSON.parse(JSON.stringify(demoHoldings));
+    let currentFilter = 'all';
+
+    function formatINR(value) {
+      return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value);
+    }
+
+    function formatPct(value) {
+      const sign = value > 0 ? '+' : value < 0 ? '' : '';
+      return sign + value.toFixed(2) + '%';
+    }
+
+    function computeAggregates() {
+      let invested = 0;
+      let current = 0;
+      let equity = 0, debt = 0, funds = 0;
+
+      holdings.forEach(h => {
+        if (currentFilter !== 'all' && h.type !== currentFilter) return;
+        const inv = h.units * h.avgCost;
+        const cur = h.units * h.ltp;
+        invested += inv;
+        current += cur;
+
+        if (h.type === 'equity') {
+          equity += cur;
+        } else if (h.type === 'mf') {
+          funds += cur;
+          if (h.subtype === 'debt') {
+            debt += cur;
+          } else {
+            equity += cur;
+          }
+        }
+      });
+
+      const pnl = current - invested;
+      const pct = invested === 0 ? 0 : (pnl / invested) * 100;
+
+      return {
+        invested,
+        current,
+        pnl,
+        pct,
+        allocation: {
+          equity,
+          debt,
+          funds
+        }
+      };
+    }
+
+    const metricInvestedEl = document.getElementById('metricInvested');
+    const metricCurrentEl = document.getElementById('metricCurrent');
+    const metricPnLEl = document.getElementById('metricPnL');
+    const metricPnLChipEl = document.getElementById('metricPnLChip');
+
+    const chipsEquity = document.getElementById('chipsEquity');
+    const chipsDebt = document.getElementById('chipsDebt');
+    const chipsFunds = document.getElementById('chipsFunds');
+
+    const holdingsTableBody = document.querySelector('#holdingsTable tbody');
+
+    let allocationChart;
+
+    function render() {
+      const { invested, current, pnl, pct, allocation } = computeAggregates();
+
+      metricInvestedEl.textContent = formatINR(invested);
+      metricCurrentEl.textContent = formatINR(current);
+      metricPnLEl.textContent = formatINR(pnl);
+
+      metricPnLChipEl.textContent = formatPct(pct);
+      metricPnLChipEl.classList.remove('positive', 'negative');
+      if (pct > 0.01) metricPnLChipEl.classList.add('positive');
+      else if (pct < -0.01) metricPnLChipEl.classList.add('negative');
+
+      holdingsTableBody.innerHTML = '';
+      holdings.forEach(h => {
+        if (currentFilter !== 'all' && h.type !== currentFilter) return;
+        const inv = h.units * h.avgCost;
+        const cur = h.units * h.ltp;
+        const pnlLocal = cur - inv;
+        const pctLocal = inv === 0 ? 0 : (pnlLocal / inv) * 100;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${h.name}</td>
+          <td>
+            <span class="tag ${h.type === 'equity' ? 'equity' : 'mf'}">${h.type}</span>
+          </td>
+          <td>${h.units.toLocaleString('en-IN')}</td>
+          <td>${formatINR(h.avgCost)}</td>
+          <td>${formatINR(h.ltp)}</td>
+          <td class="${pnlLocal >= 0 ? 'gain' : 'loss'}">${formatINR(pnlLocal)}</td>
+          <td class="${pctLocal >= 0 ? 'gain' : 'loss'}">${formatPct(pctLocal)}</td>
+        `;
+        holdingsTableBody.appendChild(tr);
+      });
+
+      const total = allocation.equity + allocation.debt + allocation.funds;
+      const eqPct = total ? (allocation.equity / total) * 100 : 0;
+      const debtPct = total ? (allocation.debt / total) * 100 : 0;
+      const fundsPct = total ? (allocation.funds / total) * 100 : 0;
+
+      chipsEquity.textContent = `Equity · ${eqPct.toFixed(1)}%`;
+      chipsDebt.textContent = `Debt & cash · ${debtPct.toFixed(1)}%`;
+      chipsFunds.textContent = `Mutual funds · ${fundsPct.toFixed(1)}%`;
+
+      const ctx = document.getElementById('allocationChart').getContext('2d');
+      const data = {
+        labels: ['Equity', 'Debt & cash', 'MF equity'],
+        datasets: [{
+          data: [allocation.equity, allocation.debt, allocation.funds],
+          backgroundColor: ['#00b894', '#636e72', '#0984e3'],
+          borderWidth:1,
+          borderColor:'#020308',
+          hoverOffset:10
+        }]
+      };
+
+      if (allocationChart) {
+        allocationChart.data = data;
+        allocationChart.update();
+      } else {
+        allocationChart = new Chart(ctx, {
+          type: 'doughnut',
+          data,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.label || '';
+                    const value = context.raw || 0;
+                    const pct = total ? (value / total) * 100 : 0;
+                    return `${label}: ${formatINR(value)} (${pct.toFixed(1)}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    document.getElementById('assetToggle').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      currentFilter = btn.dataset.type;
+      document.querySelectorAll('#assetToggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    });
+
+    document.getElementById('resetAppBtn').addEventListener('click', () => {
+      holdings = JSON.parse(JSON.stringify(demoHoldings));
+      currentFilter = 'all';
+      document.querySelectorAll('#assetToggle button').forEach(b => b.classList.remove('active'));
+      document.querySelector('#assetToggle button[data-type="all"]').classList.add('active');
+      render();
+    });
+
+    document.getElementById('addPositionBtn').addEventListener('click', () => {
+      alert('In v2, this will open a side panel to paste CAS / broker exports and auto-map to holdings.');
+    });
+
+    render();
+  </script>
+</body>
+</html>

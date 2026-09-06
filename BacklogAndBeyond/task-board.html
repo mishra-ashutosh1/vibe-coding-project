@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#11151c;
+    --bg-grid: rgba(232,169,59,0.035);
+    --surface:#1a212c;
+    --surface-2:#212a37;
+    --surface-3:#28313f;
+    --border:#2b3444;
+    --border-soft:#232b38;
+    --text:#eef1f6;
+    --text-mut:#8d95a6;
+    --text-dim:#5c6577;
+    --accent:#e8a93b;
+    --accent-soft:rgba(232,169,59,0.14);
+    --accent-mid:rgba(232,169,59,0.35);
+    --accent-shadow:rgba(232,169,59,0.5);
+    --accent-dark:#c07f22;
+    --accent-light:#f0b64f;
+    --accent-ink:#1a1305;
+    --accent-2:#4fb0a5;
+    --accent-2-soft:rgba(79,176,165,0.14);
+    --danger:#e2604f;
+    --danger-soft:rgba(226,96,79,0.14);
+    --font-display:'Space Grotesk', 'Inter', sans-serif;
+    --font-body:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono:'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  html[data-theme="light"]{
+    --bg:#f3f4f7;
+    --bg-grid: rgba(20,30,50,0.045);
+    --surface:#ffffff;
+    --surface-2:#eef0f4;
+    --surface-3:#e3e6ed;
+    --border:#dcdfe7;
+    --border-soft:#e8eaf0;
+    --text:#161a22;
+    --text-mut:#5b6376;
+    --text-dim:#8890a0;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html,body{
+    background:
+      radial-gradient(circle at 1px 1px, var(--bg-grid) 1px, transparent 1px) 0 0/22px 22px,
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    min-height:100vh;
+  }
+
+  button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; }
+  input, select, textarea{ font:inherit; color:inherit; }
+  ::selection{ background:var(--accent-soft); color:var(--text); }
+
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+
+  .app{
+    max-width:960px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+
+  /* ---------- Topbar ---------- */
+  .topbar{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{
+    width:40px; height:40px; flex-shrink:0;
+    border-radius:9px;
+    background:linear-gradient(155deg, var(--accent) 0%, var(--accent-dark) 100%);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-weight:600; font-size:15px; color:var(--accent-ink);
+    box-shadow:0 4px 14px -4px var(--accent-shadow);
+  }
+  .brand h1{
+    font-family:var(--font-display); font-size:20px; font-weight:700;
+    letter-spacing:-0.02em; line-height:1.2;
+  }
+  .brand .tagline{ font-size:12.5px; color:var(--text-mut); margin-top:2px; }
+
+  .io-actions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .btn{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:9px 14px; border-radius:8px;
+    font-size:13px; font-weight:500;
+    border:1px solid var(--border); background:var(--surface);
+    transition:background .12s, border-color .12s, transform .08s;
+    white-space:nowrap;
+  }
+  .btn:hover{ background:var(--surface-2); border-color:#3a445a; }
+  .btn:active{ transform:translateY(1px); }
+  .btn-icon{ font-family:var(--font-mono); font-size:13px; line-height:1; }
+  .btn-primary{
+    background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600;
+  }
+  .btn-primary:hover{ background:var(--accent-light); border-color:var(--accent-light); }
+  .btn-ghost{ border-color:transparent; background:transparent; }
+  .btn-ghost:hover{ background:var(--surface-2); }
+  .btn-danger-text{ color:var(--danger); }
+
+  /* ---------- Mission readout ---------- */
+  .readout{
+    border:1px solid var(--border);
+    background:var(--surface);
+    border-radius:12px;
+    padding:16px 18px;
+    margin-bottom:18px;
+  }
+  .readout-top{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:12px; flex-wrap:wrap; gap:8px;
+  }
+  .readout-label{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.12em;
+    color:var(--text-dim); text-transform:uppercase;
+  }
+  .readout-pct{ font-family:var(--font-mono); font-size:13px; color:var(--accent); font-weight:600; }
+  .readout-bar{
+    height:8px; border-radius:5px; overflow:hidden; display:flex;
+    background:var(--surface-3); border:1px solid var(--border-soft);
+  }
+  .readout-bar span{ height:100%; display:block; }
+  .seg-done{ background:var(--accent-2); }
+  .seg-active{ background:var(--accent); }
+  .stat-row{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px;
+  }
+  .stat{
+    background:var(--surface-2); border:1px solid var(--border-soft); border-radius:9px;
+    padding:9px 10px;
+  }
+  .stat .num{ font-family:var(--font-mono); font-size:17px; font-weight:600; }
+  .stat .lbl{ font-size:11px; color:var(--text-mut); margin-top:1px; }
+  .stat.warn .num{ color:var(--danger); }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .search-wrap{ position:relative; flex:1; min-width:180px; }
+  .search-wrap input{
+    width:100%; padding:9px 12px 9px 30px; border-radius:8px;
+    border:1px solid var(--border); background:var(--surface); color:var(--text);
+    font-size:13px;
+  }
+  .search-wrap input::placeholder{ color:var(--text-dim); }
+  .search-wrap .ico{
+    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    font-size:12px; color:var(--text-dim); font-family:var(--font-mono);
+  }
+  .tabs{ display:flex; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:3px; }
+  .tab{
+    padding:6px 11px; border-radius:6px; font-size:12.5px; font-weight:500; color:var(--text-mut);
+    display:flex; align-items:center; gap:5px;
+  }
+  .tab .n{ font-family:var(--font-mono); font-size:11px; opacity:.75; }
+  .tab.active{ background:var(--surface-3); color:var(--text); }
+  select.filter-select{
+    padding:8px 10px; border-radius:8px; border:1px solid var(--border);
+    background:var(--surface); color:var(--text); font-size:12.5px;
+  }
+
+  /* ---------- Task list ---------- */
+  .task-list{ display:flex; flex-direction:column; gap:8px; }
+
+  .task-card{
+    border:1px solid var(--border); background:var(--surface);
+    border-radius:10px; padding:13px 14px;
+    display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:start;
+    transition:border-color .12s, background .12s;
+  }
+  .task-card:hover{ border-color:#3a445a; }
+  .task-card.is-done{ opacity:.62; }
+
+  .status-select{
+    appearance:none; -webkit-appearance:none;
+    padding:6px 26px 6px 10px; border-radius:7px; font-size:11.5px; font-weight:600;
+    border:1px solid var(--border-soft); background-color:var(--surface-2); color:var(--text-mut);
+    background-image:linear-gradient(45deg,transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+    background-position:calc(100% - 13px) center, calc(100% - 8px) center;
+    background-size:5px 5px, 5px 5px; background-repeat:no-repeat;
+    cursor:pointer; white-space:nowrap;
+  }
+  .status-select[data-status="inprogress"]{ color:var(--accent); border-color:var(--accent-mid); background-color:var(--accent-soft); }
+  .status-select[data-status="done"]{ color:var(--accent-2); border-color:rgba(79,176,165,0.35); background-color:var(--accent-2-soft); }
+
+  .task-body{ min-width:0; }
+  .task-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px; }
+  .task-title{ font-size:14.5px; font-weight:600; line-height:1.35; }
+  .is-done .task-title{ text-decoration:line-through; color:var(--text-mut); }
+  .task-desc{ font-size:12.5px; color:var(--text-mut); line-height:1.5; margin-top:2px;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+  .meta-row{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-top:8px; }
+  .badge{
+    font-size:10.5px; font-weight:600; letter-spacing:.02em; padding:3px 8px; border-radius:5px;
+    font-family:var(--font-mono); text-transform:uppercase;
+  }
+  .badge-high{ background:var(--danger-soft); color:var(--danger); }
+  .badge-medium{ background:var(--accent-soft); color:var(--accent); }
+  .badge-low{ background:var(--accent-2-soft); color:var(--accent-2); }
+  .tag{
+    font-size:11px; padding:3px 8px; border-radius:5px; background:var(--surface-3); color:var(--text-mut);
+  }
+  .due{ font-size:11px; font-family:var(--font-mono); color:var(--text-mut); display:flex; align-items:center; gap:4px; }
+  .due.overdue{ color:var(--danger); }
+  .due.today{ color:var(--accent); }
+
+  .task-actions{ display:flex; gap:2px; }
+  .icon-btn{
+    width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center;
+    color:var(--text-dim); font-size:13px;
+  }
+  .icon-btn:hover{ background:var(--surface-2); color:var(--text); }
+  .icon-btn.confirming{ color:var(--danger); background:var(--danger-soft); font-size:10px; font-weight:700; width:auto; padding:0 8px; font-family:var(--font-mono); }
+
+  /* ---------- Empty state ---------- */
+  .empty-state{
+    text-align:center; padding:56px 20px; border:1px dashed var(--border); border-radius:12px; margin-top:6px;
+  }
+  .empty-state .mark{ font-size:26px; margin-bottom:10px; opacity:.6; }
+  .empty-state h3{ font-family:var(--font-display); font-size:15.5px; margin-bottom:6px; }
+  .empty-state p{ font-size:12.5px; color:var(--text-mut); max-width:340px; margin:0 auto; line-height:1.6; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(8,10,14,0.66); backdrop-filter:blur(2px);
+    display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal{
+    width:100%; max-width:420px; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:14px; padding:22px; max-height:88vh; overflow-y:auto;
+  }
+  .modal h2{ font-family:var(--font-display); font-size:16.5px; margin-bottom:16px; }
+  .field{ margin-bottom:13px; }
+  .field label{ display:block; font-size:11.5px; font-weight:600; color:var(--text-mut); margin-bottom:5px; text-transform:uppercase; letter-spacing:.03em; }
+  .field input, .field select, .field textarea{
+    width:100%; padding:9px 11px; border-radius:8px; border:1px solid var(--border);
+    background:var(--surface); color:var(--text); font-size:13.5px;
+  }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+
+  .import-summary{ font-size:13px; color:var(--text-mut); margin-bottom:16px; line-height:1.6; }
+  .import-summary b{ color:var(--text); }
+  .import-options{ display:flex; flex-direction:column; gap:8px; }
+  .import-options .btn{ width:100%; justify-content:center; }
+
+  /* ---------- Theme panel ---------- */
+  .theme-trigger-wrap{ position:relative; }
+  .theme-panel{
+    position:absolute; top:calc(100% + 8px); right:0; z-index:40;
+    width:220px; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:12px; padding:14px; box-shadow:0 14px 34px -12px rgba(0,0,0,0.45);
+  }
+  .panel-label{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim); display:block; margin-bottom:8px; }
+  .theme-panel-section{ margin-bottom:14px; }
+  .theme-panel-section:last-child{ margin-bottom:0; }
+  .mode-switch{ display:flex; gap:4px; background:var(--surface); border:1px solid var(--border-soft); border-radius:8px; padding:3px; }
+  .mode-btn{ flex:1; padding:6px 0; border-radius:6px; font-size:12px; font-weight:500; color:var(--text-mut); }
+  .mode-btn.active{ background:var(--surface-3); color:var(--text); }
+  .swatch-grid{ display:flex; flex-wrap:wrap; gap:9px; }
+  .swatch{
+    width:26px; height:26px; border-radius:50%; padding:0; cursor:pointer;
+    border:2px solid var(--border-soft); transition:transform .12s, border-color .12s;
+  }
+  .swatch:hover{ transform:scale(1.1); }
+  .swatch.active{ border-color:var(--text); }
+  .custom-swatch{
+    position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;
+    background:conic-gradient(#e8534d, #e8a93b, #52c26b, #4a9eea, #9b7fe0, #e8534d);
+  }
+  .custom-swatch input[type="color"]{
+    position:absolute; inset:-6px; width:calc(100% + 12px); height:calc(100% + 12px);
+    border:0; padding:0; opacity:0; cursor:pointer;
+  }
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(8px);
+    background:var(--surface-3); border:1px solid var(--border); color:var(--text);
+    padding:10px 16px; border-radius:9px; font-size:12.5px; box-shadow:0 8px 24px -8px rgba(0,0,0,0.5);
+    opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; z-index:60;
+    display:flex; align-items:center; gap:8px;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent-2); flex-shrink:0; }
+
+  [hidden]{ display:none !important; }
+
+  @media (max-width:640px){
+    .stat-row{ grid-template-columns:repeat(2,1fr); }
+    .task-card{ grid-template-columns:auto 1fr; }
+    .task-actions{ grid-column:1 / -1; justify-content:flex-end; margin-top:2px; }
+    .field-row{ grid-template-columns:1fr; }
+    .io-actions{ width:100%; }
+    .io-actions .btn{ flex:1; justify-content:center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">▣</div>
+      <div>
+        <h1>Task Board</h1>
+        <p class="tagline">Plan the day. Track the week.</p>
+      </div>
+    </div>
+    <div class="io-actions">
+      <div class="theme-trigger-wrap">
+        <button class="btn" id="themeBtn"><span class="btn-icon">◐</span> Theme</button>
+        <div class="theme-panel" id="themePanel" hidden>
+          <div class="theme-panel-section">
+            <span class="panel-label">Appearance</span>
+            <div class="mode-switch">
+              <button class="mode-btn active" id="themeModeDark" data-mode="dark">Dark</button>
+              <button class="mode-btn" id="themeModeLight" data-mode="light">Light</button>
+            </div>
+          </div>
+          <div class="theme-panel-section">
+            <span class="panel-label">Accent color</span>
+            <div class="swatch-grid" id="swatchGrid">
+              <button class="swatch active" data-hex="#e8a93b" style="background:#e8a93b" title="Amber" aria-label="Amber accent"></button>
+              <button class="swatch" data-hex="#d8678f" style="background:#d8678f" title="Rose" aria-label="Rose accent"></button>
+              <button class="swatch" data-hex="#4a9eea" style="background:#4a9eea" title="Sky" aria-label="Sky accent"></button>
+              <button class="swatch" data-hex="#9b7fe0" style="background:#9b7fe0" title="Violet" aria-label="Violet accent"></button>
+              <button class="swatch" data-hex="#4caf6b" style="background:#4caf6b" title="Emerald" aria-label="Emerald accent"></button>
+              <button class="swatch" data-hex="#8a92a6" style="background:#8a92a6" title="Graphite" aria-label="Graphite accent"></button>
+              <label class="swatch custom-swatch" title="Custom color" aria-label="Custom accent color">
+                <input type="color" id="customColorInput" value="#e8a93b">
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn" id="importBtn"><span class="btn-icon">↑</span> Import</button>
+      <input type="file" id="importInput" hidden accept=".xlsx,.xls,.csv,.json">
+      <button class="btn" id="exportXlsxBtn"><span class="btn-icon">↓</span> Export Excel</button>
+      <button class="btn btn-ghost" id="exportJsonBtn" title="Full-fidelity backup">Backup JSON</button>
+    </div>
+  </header>
+
+  <section class="readout">
+    <div class="readout-top">
+      <span class="readout-label">Board status</span>
+      <span class="readout-pct" id="readoutPct">0% complete</span>
+    </div>
+    <div class="readout-bar"><span class="seg-done" id="segDone" style="width:0%"></span><span class="seg-active" id="segActive" style="width:0%"></span></div>
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Total tasks</div></div>
+      <div class="stat"><div class="num" id="statActive">0</div><div class="lbl">In progress</div></div>
+      <div class="stat warn"><div class="num" id="statOverdue">0</div><div class="lbl">Overdue</div></div>
+      <div class="stat"><div class="num" id="statDone">0</div><div class="lbl">Completed</div></div>
+    </div>
+  </section>
+
+  <section class="toolbar">
+    <div class="search-wrap">
+      <span class="ico">⌕</span>
+      <input type="text" id="searchInput" placeholder="Search tasks…">
+    </div>
+    <div class="tabs" id="statusTabs">
+      <button class="tab active" data-status="all">All <span class="n" id="cntAll">0</span></button>
+      <button class="tab" data-status="todo">To do <span class="n" id="cntTodo">0</span></button>
+      <button class="tab" data-status="inprogress">Active <span class="n" id="cntInprogress">0</span></button>
+      <button class="tab" data-status="done">Done <span class="n" id="cntDone">0</span></button>
+    </div>
+    <select class="filter-select" id="priorityFilter">
+      <option value="all">All priorities</option>
+      <option value="high">High priority</option>
+      <option value="medium">Medium priority</option>
+      <option value="low">Low priority</option>
+    </select>
+    <select class="filter-select" id="categoryFilter">
+      <option value="all">All categories</option>
+    </select>
+    <select class="filter-select" id="sortSelect">
+      <option value="due">Sort: due date</option>
+      <option value="priority">Sort: priority</option>
+      <option value="created">Sort: newest</option>
+    </select>
+    <button class="btn btn-primary" id="newTaskBtn">+ New task</button>
+  </section>
+
+  <section class="task-list" id="taskList"></section>
+
+  <div class="empty-state" id="emptyState" hidden>
+    <div class="mark">▣</div>
+    <h3>Nothing here yet</h3>
+    <p>Add your first task, or import a board you exported earlier — .xlsx, .csv and .json files all work.</p>
+  </div>
+
+</div>
+
+<!-- Add / Edit modal -->
+<div class="modal-overlay" id="taskModalOverlay" hidden>
+  <div class="modal">
+    <h2 id="modalTitle">New task</h2>
+    <div class="field">
+      <label for="fTitle">Title</label>
+      <input type="text" id="fTitle" placeholder="What needs doing?">
+    </div>
+    <div class="field">
+      <label for="fDesc">Description</label>
+      <textarea id="fDesc" placeholder="Optional details…"></textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="fCategory">Category</label>
+        <input type="text" id="fCategory" placeholder="e.g. Work" list="categoryList">
+        <datalist id="categoryList"></datalist>
+      </div>
+      <div class="field">
+        <label for="fDue">Due date</label>
+        <input type="date" id="fDue">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="fPriority">Priority</label>
+        <select id="fPriority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fStatus">Status</label>
+        <select id="fStatus">
+          <option value="todo">To do</option>
+          <option value="inprogress">In progress</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelModalBtn">Cancel</button>
+      <button class="btn btn-primary" id="saveTaskBtn">Save task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import confirm modal -->
+<div class="modal-overlay" id="importModalOverlay" hidden>
+  <div class="modal">
+    <h2>Import tasks</h2>
+    <p class="import-summary" id="importSummary"></p>
+    <div class="import-options">
+      <button class="btn btn-primary" id="importMergeBtn">Add to current board</button>
+      <button class="btn" id="importReplaceBtn">Replace current board</button>
+      <button class="btn btn-ghost" id="importCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- State ---------------- */
+  let tasks = [];
+  let editingId = null;
+  let pendingImport = null;
+  let filters = { status:'all', priority:'all', category:'all', search:'', sort:'due' };
+  let currentAccent = '#e8a93b';
+  let currentThemeMode = 'dark';
+
+  const todayISO = () => new Date().toISOString().slice(0,10);
+
+  function uid(){ return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+  function seedData(){
+    const t = todayISO();
+    const d = (offset) => { const dt = new Date(); dt.setDate(dt.getDate()+offset); return dt.toISOString().slice(0,10); };
+    tasks = [
+      { id: uid(), title:'Send Q3 summary to the team', description:'Pull numbers from the shared sheet and write the highlights.', category:'Work', priority:'high', status:'todo', dueDate:d(-1), createdAt:t },
+      { id: uid(), title:'Review pull request #482', description:'Focus on the migration script — check for rollback safety.', category:'Work', priority:'medium', status:'inprogress', dueDate:d(0), createdAt:t },
+      { id: uid(), title:'Book dentist appointment', description:'', category:'Personal', priority:'low', status:'todo', dueDate:d(4), createdAt:t },
+      { id: uid(), title:'Renew car insurance', description:'Compare against last year\'s quote before renewing.', category:'Personal', priority:'medium', status:'done', dueDate:d(-3), createdAt:t }
+    ];
+  }
+  seedData();
+
+  /* ---------------- DOM refs ---------------- */
+  const $ = (id) => document.getElementById(id);
+  const taskList = $('taskList');
+  const emptyState = $('emptyState');
+
+  /* ---------------- Rendering ---------------- */
+  function daysDiff(iso){
+    if(!iso) return null;
+    const due = new Date(iso + 'T00:00:00');
+    const now = new Date(); now.setHours(0,0,0,0);
+    return Math.round((due - now) / 86400000);
+  }
+
+  function dueLabel(iso){
+    const n = daysDiff(iso);
+    if(n === null) return { text:'No due date', cls:'' };
+    if(n < 0) return { text:`Overdue ${Math.abs(n)}d`, cls:'overdue' };
+    if(n === 0) return { text:'Due today', cls:'today' };
+    if(n === 1) return { text:'Due tomorrow', cls:'' };
+    return { text:`Due in ${n}d`, cls:'' };
+  }
+
+  function priorityRank(p){ return p==='high'?0 : p==='medium'?1 : 2; }
+
+  function populateCategoryFilter(){
+    const cats = Array.from(new Set(tasks.map(t=>t.category).filter(Boolean))).sort();
+    const sel = $('categoryFilter');
+    const current = sel.value;
+    sel.innerHTML = '<option value="all">All categories</option>' + cats.map(c=>`<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+    if(cats.includes(current)) sel.value = current;
+
+    const dl = $('categoryList');
+    dl.innerHTML = cats.map(c=>`<option value="${escapeAttr(c)}">`).join('');
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  function escapeAttr(s){ return escapeHtml(s); }
+
+  function getFiltered(){
+    let list = tasks.slice();
+    if(filters.status !== 'all') list = list.filter(t=>t.status===filters.status);
+    if(filters.priority !== 'all') list = list.filter(t=>t.priority===filters.priority);
+    if(filters.category !== 'all') list = list.filter(t=>t.category===filters.category);
+    if(filters.search){
+      const q = filters.search.toLowerCase();
+      list = list.filter(t => (t.title+' '+t.description).toLowerCase().includes(q));
+    }
+    list.sort((a,b)=>{
+      if(filters.sort==='priority') return priorityRank(a.priority)-priorityRank(b.priority);
+      if(filters.sort==='created') return (b.createdAt||'').localeCompare(a.createdAt||'');
+      // due date: tasks without a date go last
+      if(!a.dueDate && !b.dueDate) return 0;
+      if(!a.dueDate) return 1;
+      if(!b.dueDate) return -1;
+      return a.dueDate.localeCompare(b.dueDate);
+    });
+    return list;
+  }
+
+  function render(){
+    populateCategoryFilter();
+
+    const total = tasks.length;
+    const done = tasks.filter(t=>t.status==='done').length;
+    const active = tasks.filter(t=>t.status==='inprogress').length;
+    const todo = tasks.filter(t=>t.status==='todo').length;
+    const overdue = tasks.filter(t=> t.status!=='done' && daysDiff(t.dueDate)!==null && daysDiff(t.dueDate)<0).length;
+
+    $('statTotal').textContent = total;
+    $('statActive').textContent = active;
+    $('statOverdue').textContent = overdue;
+    $('statDone').textContent = done;
+    $('cntAll').textContent = total;
+    $('cntTodo').textContent = todo;
+    $('cntInprogress').textContent = active;
+    $('cntDone').textContent = done;
+
+    const donePct = total ? Math.round((done/total)*100) : 0;
+    const activePct = total ? Math.round((active/total)*100) : 0;
+    $('readoutPct').textContent = `${donePct}% complete`;
+    $('segDone').style.width = donePct + '%';
+    $('segActive').style.width = activePct + '%';
+
+    document.querySelectorAll('.tab').forEach(tab=>{
+      tab.classList.toggle('active', tab.dataset.status === filters.status);
+    });
+
+    const list = getFiltered();
+    taskList.innerHTML = '';
+    emptyState.hidden = total !== 0;
+    if(total === 0) return;
+
+    if(list.length === 0){
+      taskList.innerHTML = `<div class="empty-state"><div class="mark">⌕</div><h3>No matches</h3><p>Try a different filter or search term.</p></div>`;
+      return;
+    }
+
+    list.forEach(t=>{
+      const card = document.createElement('div');
+      card.className = 'task-card' + (t.status==='done' ? ' is-done' : '');
+      const due = dueLabel(t.dueDate);
+      card.innerHTML = `
+        <select class="status-select" data-status="${t.status}" data-id="${t.id}">
+          <option value="todo" ${t.status==='todo'?'selected':''}>To do</option>
+          <option value="inprogress" ${t.status==='inprogress'?'selected':''}>In progress</option>
+          <option value="done" ${t.status==='done'?'selected':''}>Done</option>
+        </select>
+        <div class="task-body">
+          <div class="task-top"><span class="task-title">${escapeHtml(t.title)}</span></div>
+          ${t.description ? `<div class="task-desc">${escapeHtml(t.description)}</div>` : ''}
+          <div class="meta-row">
+            <span class="badge badge-${t.priority}">${t.priority}</span>
+            ${t.category ? `<span class="tag">${escapeHtml(t.category)}</span>` : ''}
+            <span class="due ${due.cls}">${due.text}</span>
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="icon-btn" data-edit="${t.id}" title="Edit" aria-label="Edit task">✎</button>
+          <button class="icon-btn" data-delete="${t.id}" title="Delete" aria-label="Delete task">✕</button>
+        </div>
+      `;
+      taskList.appendChild(card);
+    });
+  }
+
+  /* ---------------- Events: filters ---------------- */
+  $('statusTabs').addEventListener('click', e=>{
+    const tab = e.target.closest('.tab');
+    if(!tab) return;
+    filters.status = tab.dataset.status;
+    render();
+  });
+  $('priorityFilter').addEventListener('change', e=>{ filters.priority = e.target.value; render(); });
+  $('categoryFilter').addEventListener('change', e=>{ filters.category = e.target.value; render(); });
+  $('sortSelect').addEventListener('change', e=>{ filters.sort = e.target.value; render(); });
+  $('searchInput').addEventListener('input', e=>{ filters.search = e.target.value; render(); });
+
+  /* ---------------- Events: task list (status change, edit, delete) ---------------- */
+  taskList.addEventListener('change', e=>{
+    const sel = e.target.closest('.status-select');
+    if(!sel) return;
+    const task = tasks.find(t=>t.id===sel.dataset.id);
+    if(task){ task.status = sel.value; render(); showToast(`Marked "${task.title}" as ${statusLabel(task.status)}`); }
+  });
+
+  taskList.addEventListener('click', e=>{
+    const editBtn = e.target.closest('[data-edit]');
+    const delBtn = e.target.closest('[data-delete]');
+    if(editBtn){ openModal(editBtn.dataset.edit); return; }
+    if(delBtn){
+      if(delBtn.classList.contains('confirming')){
+        const id = delBtn.dataset.delete;
+        const t = tasks.find(x=>x.id===id);
+        tasks = tasks.filter(x=>x.id!==id);
+        render();
+        showToast(`Deleted "${t ? t.title : 'task'}"`);
+      } else {
+        delBtn.classList.add('confirming');
+        delBtn.textContent = 'Confirm?';
+        setTimeout(()=>{
+          if(delBtn.isConnected){ delBtn.classList.remove('confirming'); delBtn.textContent = '✕'; }
+        }, 2600);
+      }
+    }
+  });
+
+  function statusLabel(s){ return s==='todo'?'to do' : s==='inprogress'?'in progress' : 'done'; }
+
+  /* ---------------- Modal: add / edit ---------------- */
+  function openModal(id){
+    editingId = id || null;
+    const t = id ? tasks.find(x=>x.id===id) : null;
+    $('modalTitle').textContent = t ? 'Edit task' : 'New task';
+    $('fTitle').value = t ? t.title : '';
+    $('fDesc').value = t ? t.description : '';
+    $('fCategory').value = t ? t.category : '';
+    $('fDue').value = t ? t.dueDate : '';
+    $('fPriority').value = t ? t.priority : 'medium';
+    $('fStatus').value = t ? t.status : 'todo';
+    populateCategoryFilter();
+    $('taskModalOverlay').hidden = false;
+    setTimeout(()=>$('fTitle').focus(), 30);
+  }
+  function closeModal(){ $('taskModalOverlay').hidden = true; editingId = null; }
+
+  $('newTaskBtn').addEventListener('click', ()=>openModal(null));
+  $('cancelModalBtn').addEventListener('click', closeModal);
+  $('taskModalOverlay').addEventListener('click', e=>{ if(e.target.id==='taskModalOverlay') closeModal(); });
+
+  $('saveTaskBtn').addEventListener('click', ()=>{
+    const title = $('fTitle').value.trim();
+    if(!title){ $('fTitle').focus(); return; }
+    const data = {
+      title,
+      description: $('fDesc').value.trim(),
+      category: $('fCategory').value.trim(),
+      dueDate: $('fDue').value,
+      priority: $('fPriority').value,
+      status: $('fStatus').value
+    };
+    if(editingId){
+      const t = tasks.find(x=>x.id===editingId);
+      Object.assign(t, data);
+      showToast(`Saved "${title}"`);
+    } else {
+      tasks.push(Object.assign({ id:uid(), createdAt: todayISO() }, data));
+      showToast(`Added "${title}"`);
+    }
+    closeModal();
+    render();
+  });
+
+  /* ---------------- Toast ---------------- */
+  let toastTimer = null;
+  function showToast(msg){
+    const el = $('toast');
+    $('toastMsg').textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>el.classList.remove('show'), 2600);
+  }
+
+  /* ---------------- Export: Excel ---------------- */
+  $('exportXlsxBtn').addEventListener('click', ()=>{
+    const rows = tasks.map(t=>({
+      Title: t.title,
+      Description: t.description,
+      Category: t.category,
+      Priority: t.priority.charAt(0).toUpperCase()+t.priority.slice(1),
+      Status: t.status==='todo' ? 'To Do' : t.status==='inprogress' ? 'In Progress' : 'Done',
+      'Due Date': t.dueDate || '',
+      'Created At': t.createdAt || ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:32},{wch:40},{wch:16},{wch:10},{wch:13},{wch:12},{wch:12}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Tasks');
+    XLSX.writeFile(wb, `task-board-${todayISO()}.xlsx`);
+    showToast('Exported to Excel');
+  });
+
+  /* ---------------- Export: JSON backup ---------------- */
+  $('exportJsonBtn').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(tasks, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `task-board-backup-${todayISO()}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Backup JSON downloaded');
+  });
+
+  /* ---------------- Import ---------------- */
+  $('importBtn').addEventListener('click', ()=> $('importInput').click());
+
+  $('importInput').addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+
+    reader.onload = evt=>{
+      try{
+        let imported = [];
+        if(ext === 'json'){
+          const raw = JSON.parse(evt.target.result);
+          imported = normalizeRows(Array.isArray(raw) ? raw : (raw.tasks || []));
+        } else {
+          const wb = XLSX.read(evt.target.result, { type:'array' });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval:'' });
+          imported = normalizeRows(rows);
+        }
+        if(imported.length === 0){ showToast('No tasks found in that file'); return; }
+        pendingImport = imported;
+        $('importSummary').innerHTML = `Found <b>${imported.length}</b> task${imported.length===1?'':'s'} in <b>${escapeHtml(file.name)}</b>. Add them to your current board, or replace the board entirely.`;
+        $('importModalOverlay').hidden = false;
+      } catch(err){
+        showToast('Could not read that file');
+      }
+      $('importInput').value = '';
+    };
+
+    if(ext === 'json') reader.readAsText(file);
+    else reader.readAsArrayBuffer(file);
+  });
+
+  function normalizeRows(rows){
+    const pick = (row, keys) => {
+      for(const k of Object.keys(row)){
+        if(keys.includes(k.toLowerCase().trim())) return row[k];
+      }
+      return '';
+    };
+    const normPriority = v=>{
+      v = String(v||'').toLowerCase().trim();
+      return ['high','medium','low'].includes(v) ? v : 'medium';
+    };
+    const normStatus = v=>{
+      v = String(v||'').toLowerCase().trim().replace(/\s|_/g,'');
+      if(v==='done'||v==='complete'||v==='completed') return 'done';
+      if(v==='inprogress'||v==='active'||v==='doing') return 'inprogress';
+      return 'todo';
+    };
+    const normDate = v=>{
+      if(!v) return '';
+      if(typeof v === 'number'){
+        const d = XLSX.SSF.parse_date_code(v);
+        if(d) return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+      }
+      const s = String(v).trim();
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+      const parsed = new Date(s);
+      if(!isNaN(parsed)) return parsed.toISOString().slice(0,10);
+      return '';
+    };
+
+    return rows.map(row=>{
+      const title = String(pick(row,['title','task','name']) || '').trim();
+      if(!title) return null;
+      return {
+        id: uid(),
+        title,
+        description: String(pick(row,['description','desc','notes','note']) || '').trim(),
+        category: String(pick(row,['category','tag','tags']) || '').trim(),
+        priority: normPriority(pick(row,['priority'])),
+        status: normStatus(pick(row,['status'])),
+        dueDate: normDate(pick(row,['due date','duedate','due','due_date'])),
+        createdAt: normDate(pick(row,['created at','createdat','created'])) || todayISO()
+      };
+    }).filter(Boolean);
+  }
+
+  $('importMergeBtn').addEventListener('click', ()=>{
+    tasks = tasks.concat(pendingImport);
+    finishImport(`Added ${pendingImport.length} task${pendingImport.length===1?'':'s'}`);
+  });
+  $('importReplaceBtn').addEventListener('click', ()=>{
+    tasks = pendingImport;
+    finishImport(`Replaced board with ${pendingImport.length} task${pendingImport.length===1?'':'s'}`);
+  });
+  $('importCancelBtn').addEventListener('click', ()=>{ pendingImport = null; $('importModalOverlay').hidden = true; });
+  $('importModalOverlay').addEventListener('click', e=>{ if(e.target.id==='importModalOverlay'){ pendingImport = null; $('importModalOverlay').hidden = true; } });
+
+  function finishImport(msg){
+    $('importModalOverlay').hidden = true;
+    pendingImport = null;
+    render();
+    showToast(msg);
+  }
+
+  /* ---------------- Theme & accent color ---------------- */
+  function hexToRgb(hex){
+    hex = hex.replace('#','');
+    if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+    const num = parseInt(hex,16);
+    return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+  }
+  function rgbToHex(r,g,b){
+    return '#' + [r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+  }
+  function mix(hex, target, ratio){
+    const c = hexToRgb(hex);
+    const t = target==='black' ? {r:0,g:0,b:0} : {r:255,g:255,b:255};
+    return rgbToHex(c.r+(t.r-c.r)*ratio, c.g+(t.g-c.g)*ratio, c.b+(t.b-c.b)*ratio);
+  }
+  function rgbaFromHex(hex, alpha){
+    const c = hexToRgb(hex);
+    return `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha})`;
+  }
+  function relLuminance(hex){
+    const c = hexToRgb(hex);
+    const a = [c.r,c.g,c.b].map(v=>{ v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4); });
+    return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2];
+  }
+
+  function applyAccent(hex){
+    const root = document.documentElement.style;
+    root.setProperty('--accent', hex);
+    root.setProperty('--accent-soft', rgbaFromHex(hex,0.14));
+    root.setProperty('--accent-mid', rgbaFromHex(hex,0.35));
+    root.setProperty('--accent-shadow', rgbaFromHex(hex,0.5));
+    root.setProperty('--accent-dark', mix(hex,'black',0.28));
+    root.setProperty('--accent-light', mix(hex,'white',0.16));
+    root.setProperty('--accent-ink', relLuminance(hex) > 0.42 ? '#181307' : '#ffffff');
+    currentAccent = hex;
+    document.querySelectorAll('.swatch[data-hex]').forEach(s=>{
+      s.classList.toggle('active', s.dataset.hex.toLowerCase() === hex.toLowerCase());
+    });
+  }
+
+  function setThemeMode(mode){
+    document.documentElement.setAttribute('data-theme', mode);
+    $('themeModeDark').classList.toggle('active', mode==='dark');
+    $('themeModeLight').classList.toggle('active', mode==='light');
+    currentThemeMode = mode;
+  }
+
+  $('themeBtn').addEventListener('click', e=>{
+    e.stopPropagation();
+    $('themePanel').hidden = !$('themePanel').hidden;
+  });
+  document.addEventListener('click', e=>{
+    if(!$('themePanel').hidden && !e.target.closest('.theme-trigger-wrap')) $('themePanel').hidden = true;
+  });
+  $('swatchGrid').addEventListener('click', e=>{
+    const sw = e.target.closest('.swatch[data-hex]');
+    if(sw) applyAccent(sw.dataset.hex);
+  });
+  $('customColorInput').addEventListener('input', e=> applyAccent(e.target.value));
+  $('themeModeDark').addEventListener('click', ()=> setThemeMode('dark'));
+  $('themeModeLight').addEventListener('click', ()=> setThemeMode('light'));
+
+  /* ---------------- Keyboard ---------------- */
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape'){
+      if(!$('taskModalOverlay').hidden) closeModal();
+      if(!$('importModalOverlay').hidden){ pendingImport=null; $('importModalOverlay').hidden = true; }
+      if(!$('themePanel').hidden) $('themePanel').hidden = true;
+    }
+  });
+
+  applyAccent(currentAccent);
+  setThemeMode(currentThemeMode);
+  render();
+})();
+</script>
+</body>
+</html>
